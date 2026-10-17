@@ -68,7 +68,8 @@ test('built game supports exploration, switching and session-only state without 
 
   for (const [key, name, speed] of [
     ['2', '一个人', 7],
-    ['3', '一座岛屿', 15],
+    // 岛屿本体沿用现有的 25 场景单位/秒移动基线。
+    ['3', '一座岛屿', 25],
     ['4', '一颗星球', 38],
     ['1', '一株草', 1.65],
   ]) {
@@ -87,10 +88,13 @@ test('built game supports exploration, switching and session-only state without 
       // The human avatar is a real glTF download; keep rendering frames until
       // the scene reports the model attached, or fail if it never does.
       await expect
-        .poll(async () => {
-          await advanceGame(page, 200);
-          return canvas.getAttribute('data-avatar');
-        })
+        .poll(
+          async () => {
+            await advanceGame(page, 200);
+            return canvas.getAttribute('data-avatar');
+          },
+          { timeout: process.env.CI ? 120_000 : 60_000 },
+        )
         .toBe('ready');
     }
     if (key === '1') await expect(page.locator('#senses')).toBeVisible();

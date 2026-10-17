@@ -53,6 +53,7 @@ const worlds = [];
 const movementInput = createMovementInput();
 const keys = movementInput.keys;
 const stepMovement = createMovementStepper();
+let lastAvatarState;
 
 const v = new THREE.Vector3(),
   target = new THREE.Vector3(),
@@ -766,6 +767,11 @@ function animate() {
   if (time > talkUntil) $('encounter').classList.remove('visible');
   if (time > toastUntil) $('toast').classList.remove('visible');
   renderer.render(w.scene, camera);
+  const avatarState = w.avatarState ?? 'built-in';
+  if (avatarState !== lastAvatarState) {
+    canvas.dataset.avatar = avatarState;
+    lastAvatarState = avatarState;
+  }
   if (frame % 30 === 0) {
     canvas.dataset.position = `${w.position.x.toFixed(2)},${w.position.z.toFixed(2)}`;
     canvas.dataset.followers = w.followers.length;
@@ -773,7 +779,6 @@ function animate() {
     canvas.dataset.altitude = w.position.y.toFixed(2);
     if (w.environment) canvas.dataset.weather = w.environment.state.weather;
     canvas.dataset.drawcalls = renderer.info.render.calls;
-    canvas.dataset.avatar = w.avatarState ?? 'built-in';
     if (w.weather) canvas.dataset.weather = w.weather;
   }
 }
