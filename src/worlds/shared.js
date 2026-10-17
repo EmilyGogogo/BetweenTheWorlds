@@ -377,6 +377,7 @@ export function createWorldTools(renderer) {
       group,
       position: new THREE.Vector3(),
       talkers: [],
+      sameKind: null,
       followers: [],
       recruitables: [],
       moving: 0,

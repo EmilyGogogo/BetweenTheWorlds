@@ -1,6 +1,12 @@
 import * as THREE from '../vendor/three.module.js';
 import { feelingTopics, weatherArrivals } from './content/grass-feelings.js';
 import { descriptions } from './content/worlds.js';
+import {
+  DIALOGUE_CHOICE_KEYS,
+  dialogueChoice,
+  dialogueNode,
+  rollSameKindEncounter,
+} from './core/encounters.js';
 import { chooseFeeling } from './core/feelings.js';
 import { heightCm } from './core/grass-environment.js';
 import { createWorldFactory } from './worlds/index.js';
@@ -52,6 +58,10 @@ let active = 0,
 let lastTalk = -30,
   talkUntil = -1,
   toastUntil = 0;
+const sameKindPrompt = $('same-kind');
+const dialogueBox = $('dialogue');
+let dialogueState = null,
+  dialogueReturnFocus = null;
 // The grass layer's spoken sensations, shown in a bubble above the speaker.
 const FEELING_SECONDS = 7.5;
 const feelingBox = $('feeling');
@@ -103,6 +113,8 @@ async function switchWorld(index) {
   if (index === active || switching || !started) return;
   switching = true;
   keys.clear();
+  closeSameKindDialogue();
+  sameKindPrompt.classList.add('hidden');
   hideFeeling();
   $('encounter').classList.remove('visible');
   $('invite').classList.add('hidden');
@@ -117,6 +129,7 @@ async function switchWorld(index) {
     lastTalk = time;
     talkUntil = -1;
     nearGrass = null;
+    if (getWorld(index).sameKind) getWorld(index).sameKind.inRange = false;
     updateUI();
     placeCamera(true);
     if (audio) updateAudio();
@@ -176,6 +189,109 @@ function say(talker) {
   lastTalk = time;
   talkUntil = time + 8.5;
 }
+function sameKindInRange(npc, w) {
+  npc.object.getWorldPosition(v);
+  return v.distanceTo(w.avatar.position) <= npc.range;
+}
+function renderDialogueNode() {
+  if (!dialogueState) return;
+  const node = dialogueNode(dialogueState.npc, dialogueState.nodeId);
+  if (!node) {
+    closeSameKindDialogue();
+    return;
+  }
+  $('dialogue-line').textContent = node.text;
+  const choices = $('dialogue-choices');
+  choices.replaceChildren();
+  const options = node.end ? [] : (node.choices ?? []);
+  options.forEach((choice, index) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'dialogue-choice';
+    button.dataset.choice = DIALOGUE_CHOICE_KEYS[index];
+    const key = document.createElement('kbd');
+    key.textContent = DIALOGUE_CHOICE_KEYS[index];
+    const text = document.createElement('span');
+    text.textContent = choice.text;
+    button.append(key, text);
+    button.addEventListener('click', () => chooseDialogueResponse(index));
+    choices.append(button);
+  });
+  $('dialogue-hint').textContent = options.length
+    ? '按 A / B / C 回复 · Esc 离开'
+    : '对话结束 · Esc 或 × 继续探索';
+  const nextFocus = options.length
+    ? choices.querySelector('button')
+    : $('dialogue-close');
+  nextFocus?.focus();
+}
+function openSameKindDialogue(npc) {
+  if (!started || switching || dialogueState || !npc?.start) return;
+  keys.clear();
+  hideFeeling();
+  $('encounter').classList.remove('visible');
+  talkUntil = -1;
+  $('invite').classList.add('hidden');
+  sameKindPrompt.classList.add('hidden');
+  dialogueReturnFocus = document.activeElement;
+  dialogueState = { npc, nodeId: npc.start };
+  $('dialogue-speaker').textContent = `${npc.name} · 同类`;
+  $('dialogue-source').textContent = npc.source;
+  $('dialogue-reply').textContent = '';
+  $('dialogue-reply').classList.add('hidden');
+  dialogueBox.classList.remove('hidden');
+  renderDialogueNode();
+}
+function chooseDialogueResponse(index) {
+  if (!dialogueState) return;
+  const node = dialogueNode(dialogueState.npc, dialogueState.nodeId);
+  const choice = dialogueChoice(node, index);
+  if (!choice) return;
+  $('dialogue-reply').textContent = `你：${choice.text}`;
+  $('dialogue-reply').classList.remove('hidden');
+  if (!choice.next) {
+    $('dialogue-choices').replaceChildren();
+    $('dialogue-hint').textContent = '对话结束 · Esc 或 × 继续探索';
+    $('dialogue-close').focus();
+    return;
+  }
+  dialogueState.nodeId = choice.next;
+  renderDialogueNode();
+}
+function closeSameKindDialogue() {
+  if (!dialogueState) return;
+  dialogueBox.classList.add('hidden');
+  dialogueState = null;
+  $('dialogue-choices').replaceChildren();
+  $('dialogue-line').textContent = '';
+  $('dialogue-reply').textContent = '';
+  $('dialogue-reply').classList.add('hidden');
+  const focus =
+    dialogueReturnFocus && document.contains(dialogueReturnFocus)
+      ? dialogueReturnFocus
+      : canvas;
+  dialogueReturnFocus = null;
+  focus.focus();
+}
+function talkToSameKind() {
+  if (!started || switching || dialogueState) return;
+  const w = getWorld(active),
+    npc = w.sameKind;
+  if (npc && sameKindInRange(npc, w)) openSameKindDialogue(npc);
+}
+function checkSameKindEncounter(w) {
+  const npc = w.sameKind;
+  if (!npc || !started || switching || dialogueState) {
+    sameKindPrompt.classList.add('hidden');
+    return;
+  }
+  const inRange = sameKindInRange(npc, w);
+  const entered = inRange && !npc.inRange;
+  npc.inRange = inRange;
+  sameKindPrompt.classList.toggle('hidden', !inRange);
+  if (entered && rollSameKindEncounter(() => rand(0, 1)))
+    openSameKindDialogue(npc);
+}
 function recruit() {
   const w = getWorld(0);
   if (active !== 0 || !nearGrass || !started || switching) return;
@@ -194,7 +310,7 @@ function recruit() {
   nearGrass = null;
 }
 function encounter() {
-  if (!started || switching) return;
+  if (!started || switching || dialogueState) return;
   const w = getWorld(active);
   if (time - lastTalk > 19) {
     const candidates = w.talkers.filter((t) => {
@@ -400,6 +516,7 @@ $('begin').onclick = () => {
   toast('按住鼠标拖动观察，W A S D 自由移动。');
 };
 $('sound').onclick = toggleAudio;
+$('dialogue-close').onclick = closeSameKindDialogue;
 $('help').onclick = () => {
   keys.clear();
   $('help-panel').classList.remove('hidden');
@@ -411,8 +528,24 @@ function closeHelp() {
 }
 $('close-help').onclick = closeHelp;
 addEventListener('keydown', (e) => {
+  if (dialogueState) {
+    if (e.code === 'Escape') {
+      e.preventDefault();
+      closeSameKindDialogue();
+      return;
+    }
+    const choiceIndex = DIALOGUE_CHOICE_KEYS.indexOf(e.key.toUpperCase());
+    if (choiceIndex >= 0 && !e.repeat) {
+      e.preventDefault();
+      chooseDialogueResponse(choiceIndex);
+    }
+    return;
+  }
   if (e.code === 'Escape') {
-    closeHelp();
+    if (!$('help-panel').classList.contains('hidden')) {
+      e.preventDefault();
+      closeHelp();
+    }
     return;
   }
   if (!started || !$('help-panel').classList.contains('hidden')) return;
@@ -435,6 +568,7 @@ addEventListener('keydown', (e) => {
     switchWorld(+e.key - 1);
   if (e.code === 'KeyE' && !e.repeat) recruit();
   if (e.code === 'KeyF' && !e.repeat) listenToSelf();
+  if (e.code === 'KeyR' && !e.repeat) talkToSameKind();
 });
 addEventListener('keyup', (e) => keys.delete(e.code));
 addEventListener('blur', () => {
@@ -442,7 +576,7 @@ addEventListener('blur', () => {
   drag = null;
 });
 canvas.addEventListener('pointerdown', (e) => {
-  if (!started || switching) return;
+  if (!started || switching || dialogueState) return;
   drag = { x: e.clientX, y: e.clientY };
   canvas.setPointerCapture(e.pointerId);
   canvas.style.cursor = 'grabbing';
@@ -463,7 +597,7 @@ canvas.addEventListener('pointercancel', () => {
 canvas.addEventListener(
   'wheel',
   (e) => {
-    if (!started) return;
+    if (!started || dialogueState) return;
     e.preventDefault();
     zoom = Math.max(0.55, Math.min(2.4, zoom + e.deltaY * 0.001));
   },
@@ -484,7 +618,12 @@ function animate() {
     d = descriptions[active];
   let dx = 0,
     dz = 0;
-  if (started && !switching && $('help-panel').classList.contains('hidden')) {
+  if (
+    started &&
+    !switching &&
+    !dialogueState &&
+    $('help-panel').classList.contains('hidden')
+  ) {
     if (keys.has('KeyW') || keys.has('ArrowUp')) dz -= 1;
     if (keys.has('KeyS') || keys.has('ArrowDown')) dz += 1;
     if (keys.has('KeyA') || keys.has('ArrowLeft')) dx -= 1;
@@ -538,16 +677,25 @@ function animate() {
       w.sun.position.set(w.position.x - 60, 58, w.position.z - 75);
       w.sun.target.position.copy(w.avatar.position);
     }
+    w.sameKind?.object.userData.limbs?.forEach((limb, i) => {
+      limb.rotation.x = Math.sin(time * 1.1 + i * 0.7) * 0.025;
+    });
   }
   if (active === 2) {
     w.avatar.rotation.y += dt * 0.008;
     w.avatar.rotation.z = reduced ? 0 : Math.sin(time * 0.24) * 0.003;
   }
-  if (active === 3) w.globe.rotation.y += dt * 0.018;
+  if (active === 3) {
+    w.globe.rotation.y += dt * 0.018;
+    if (w.sameKind) w.sameKind.object.rotation.y += dt * 0.012;
+  }
   if (w.particles && !reduced) w.particles.rotation.y = time * 0.003;
   if (w.update) w.update(dt, time, reduced);
   placeCamera();
-  if (frame % 12 === 0) encounter();
+  if (frame % 12 === 0) {
+    encounter();
+    checkSameKindEncounter(w);
+  }
   if (feeling) {
     if (time > feeling.until) hideFeeling();
     else positionFeeling();
@@ -561,6 +709,8 @@ function animate() {
     canvas.dataset.followers = worlds[0].followers.length;
     canvas.dataset.weather = worlds[0].environment.state.weather;
     canvas.dataset.drawcalls = renderer.info.render.calls;
+    canvas.dataset.sameKind = w.sameKind?.name ?? '';
+    canvas.dataset.dialogue = dialogueState?.nodeId ?? '';
   }
 }
 try {

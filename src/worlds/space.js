@@ -1,4 +1,5 @@
 import * as THREE from '../../vendor/three.module.js';
+import { sameKindEncounters } from '../content/encounters.js';
 import { rng } from '../core/random.js';
 
 export function makeSpace(tools) {
@@ -107,6 +108,15 @@ export function makeSpace(tools) {
     );
     w.globe.rotation.z = 0.15;
     atmosphere(w.avatar, 24.1);
+    const sameKind = w.avatar.clone(true);
+    sameKind.position.set(35, 8, -45);
+    sameKind.scale.setScalar(0.55);
+    s.add(sameKind);
+    w.sameKind = {
+      object: sameKind,
+      range: 70,
+      ...sameKindEncounters[3],
+    };
     const p = new THREE.Group();
     s.add(p);
     p.position.set(-150, 40, -230);

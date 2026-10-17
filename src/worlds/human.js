@@ -1,4 +1,5 @@
 import * as THREE from '../../vendor/three.module.js';
+import { sameKindEncounters } from '../content/encounters.js';
 
 export function makeHuman(tools) {
   const {
@@ -108,6 +109,15 @@ export function makeHuman(tools) {
     });
     w.avatar = human();
     s.add(w.avatar);
+    const sameKind = human();
+    sameKind.position.set(4, groundHeight(4, -9), -9);
+    sameKind.rotation.y = Math.PI;
+    s.add(sameKind);
+    w.sameKind = {
+      object: sameKind,
+      range: 11,
+      ...sameKindEncounters[1],
+    };
     w.particles = particles(s, 100, 80, '#fce6ac', 0.05, 15);
     return w;
   }

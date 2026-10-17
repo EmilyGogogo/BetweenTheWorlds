@@ -9,8 +9,10 @@ index.html                 语义结构、入口与操作提示
 src/main.js                会话状态、输入、切换、镜头、对白触发、音频与动画循环
 src/styles.css             现有界面样式与响应式布局
 src/content/worlds.js      四层名称、尺度、镜头与移动参数
+src/content/encounters.js  四层同类 NPC 的名称、开场、A/B/C 回复与回答
 src/content/grass-feelings.js  草的感受、天气转变时的句子与可邀请的草种
 src/core/random.js         可复现的随机数生成器
+src/core/encounters.js     30% 同类相遇概率与对话节点读取（纯逻辑）
 src/core/grass-environment.js  草层天气、温度、土壤湿度、光合作用与生长（纯逻辑）
 src/core/feelings.js       按当前感知挑选感受句子（纯逻辑）
 src/worlds/index.js        场景工厂装配
@@ -33,7 +35,9 @@ docs/                      方向、任务、验证、维护与决策
 
 `createWorldFactory(renderer)` 为本次会话创建共享工具与四个 builder；每个 builder 返回自己的场景状态。层顺序固定为草、人、岛屿、星球，与 `descriptions`、按钮索引和快捷键一致。改动顺序需要同步这些调用方与测试。
 
-场景状态包含 `scene`、`position`、`avatar`、`talkers`、`followers`、`recruitables`。对白实体包含 `object`、`range`、`name`、`lines`，每条 `lines` 记录正文与来源说明。层特有数据由所属模块创建，主循环只更新实际需要的部分。场景状态可以提供可选的 `update(dt, time, reduced)`，主循环只对当前层调用；草层用它推进天气、昆虫和生长，离开草层时这些状态暂停。草层另有 `environment`（见 `grass-environment.js`）与 `weatherEvent`（天气刚变化时的阶段名，由主控制器读取后清空），可邀请的草带有 `species`。
+场景状态包含 `scene`、`position`、`avatar`、`talkers`、`sameKind`、`followers`、`recruitables`。对白实体包含 `object`、`range`、`name`、`lines`，每条 `lines` 记录正文与来源说明。每个尺度还有一个可选的 `sameKind`，包含 3D `object`、触发 `range`，以及来自 `content/encounters.js` 的 `name`、`source`、`start` 和 `nodes`。对话节点提供一句 NPC 文本，并以最多三个 A/B/C `choices` 指向下一个节点；叶节点使用 `end: true`。
+
+主控制器在玩家每次进入同类范围时用固定随机源判定一次 30% 概率，命中后自动打开对话；玩家也可以按 R 主动打开。对话打开期间移动、拖动和尺度切换输入暂停，A/B/C 只用于选择回复。层特有数据由所属模块创建，主循环只更新实际需要的部分。场景状态可以提供可选的 `update(dt, time, reduced)`，主循环只对当前层调用；草层用它推进天气、昆虫和生长，离开草层时这些状态暂停。草层另有 `environment`（见 `grass-environment.js`）与 `weatherEvent`（天气刚变化时的阶段名，由主控制器读取后清空），可邀请的草带有 `species`。
 
 共享工具作为参数注入四层，避免场景直接依赖主控制器。地面高度函数同时用于地形、角色和镜头，修改时三者需要一起验证。
 

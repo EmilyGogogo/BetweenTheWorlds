@@ -8,6 +8,32 @@ async function advanceGame(page, milliseconds) {
   }
 }
 
+async function dismissDialogue(page) {
+  if (await page.locator('#dialogue').isVisible()) {
+    await page.keyboard.press('Escape');
+    await advanceGame(page, 100);
+  }
+  await expect(page.locator('#dialogue')).toBeHidden();
+}
+
+async function exerciseSameKindDialogue(page, name) {
+  await advanceGame(page, 650);
+  if (!(await page.locator('#dialogue').isVisible())) {
+    await expect(page.locator('#same-kind')).toBeVisible();
+    await page.keyboard.press('r');
+  }
+  await expect(page.locator('#dialogue')).toBeVisible();
+  await expect(page.locator('#dialogue-speaker')).toHaveText(`${name} · 同类`);
+  await expect(page.locator('#dialogue-source')).toHaveText('原创 · 万物之间');
+  await expect(page.locator('#dialogue-choices button')).toHaveCount(3);
+  const opening = await page.locator('#dialogue-line').textContent();
+  await page.keyboard.press('a');
+  await expect(page.locator('#dialogue-reply')).toHaveText(/^你：/);
+  await expect(page.locator('#dialogue-line')).not.toHaveText(opening ?? '');
+  await expect(page.locator('#dialogue-choices button')).toHaveCount(0);
+  await dismissDialogue(page);
+}
+
 test('built game supports exploration, switching and session-only state without network assets', async ({
   page,
 }) => {
@@ -36,6 +62,7 @@ test('built game supports exploration, switching and session-only state without 
   await expect(page.locator('#sound')).toHaveText('声音 开');
   await page.locator('#sound').click();
   await expect(page.locator('#sound')).toHaveText('声音 关');
+  await dismissDialogue(page);
 
   await expect(page.locator('#invite')).toBeVisible();
   await page.keyboard.press('e');
@@ -66,11 +93,11 @@ test('built game supports exploration, switching and session-only state without 
   await expect(page.locator('#encounter')).toHaveClass(/visible/);
   await expect(page.locator('#thought')).not.toHaveText('');
 
-  for (const [key, name] of [
-    ['2', '一个人'],
-    ['3', '一座岛屿'],
-    ['4', '一颗星球'],
-    ['1', '一株草'],
+  for (const [key, name, sameKind] of [
+    ['2', '一个人', '另一个旅人'],
+    ['3', '一座岛屿', '另一座岛'],
+    ['4', '一颗星球', '另一颗星球'],
+    ['1', '一株草', '另一株草'],
   ]) {
     await page.keyboard.press(key);
     // Input is locked during the 480 ms fade-out and 70 ms fade-in. Complete
@@ -82,6 +109,7 @@ test('built game supports exploration, switching and session-only state without 
     await expect(
       page.locator(`button[data-world="${Number(key) - 1}"]`),
     ).toHaveAttribute('aria-pressed', 'true');
+    await exerciseSameKindDialogue(page, sameKind);
     if (key === '1') await expect(page.locator('#senses')).toBeVisible();
     else {
       await expect(page.locator('#senses')).toBeHidden();

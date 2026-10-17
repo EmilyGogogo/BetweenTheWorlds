@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="./src/styles.css" />
   </head>
   <body>
-    <canvas id="world" aria-label="可探索的三维自然世界"></canvas>
+    <canvas id="world" tabindex="0" aria-label="可探索的三维自然世界"></canvas>
     <div class="grain" aria-hidden="true"></div>
     <div id="veil" aria-hidden="true"></div>
     <header>
@@ -44,6 +44,29 @@
       <p id="thought"></p>
       <small id="thought-source"></small>
     </div>
+    <div id="same-kind" class="hidden" role="status">
+      <kbd>R</kbd><span>与同类交谈</span>
+    </div>
+    <section
+      id="dialogue"
+      class="hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="dialogue-speaker"
+    >
+      <div class="dialogue-card">
+        <div class="dialogue-top">
+          <span class="eyebrow">A SAME-KIND ENCOUNTER</span
+          ><button id="dialogue-close" aria-label="结束对话">×</button>
+        </div>
+        <span id="dialogue-speaker"></span>
+        <p id="dialogue-reply" class="hidden"></p>
+        <p id="dialogue-line"></p>
+        <div id="dialogue-choices"></div>
+        <small id="dialogue-source"></small>
+        <div id="dialogue-hint"></div>
+      </div>
+    </section>
     <div id="feeling" role="status">
       <span id="feeling-speaker"></span>
       <p id="feeling-text"></p>
@@ -117,7 +140,7 @@
       <div class="controls">
         <span><kbd>W A S D</kbd> 移动</span
         ><span><span class="mouse-icon">↔</span> 拖动观察</span
-        ><span><kbd>滚轮</kbd> 远近</span>
+        ><span><kbd>滚轮</kbd> 远近 · <kbd>R</kbd> 与同类交谈</span>
       </div>
       <nav aria-label="选择存在尺度">
         <div class="nav-label">成为万物 <span>CHOOSE YOUR SCALE</span></div>
@@ -172,8 +195,9 @@
       <h2 id="help-title">不必到达哪里。</h2>
       <p>
         W / S 前后移动，A / D 左右移动。<br />按住鼠标左键拖动，环绕观察；滚轮调整远近。<br />按
-        1—4 或点击底部，成为另一种存在。<br />草层靠近其他草，按 E
-        邀请它们同行；按 F 倾听自己此刻的感受。
+        1—4 或点击底部，成为另一种存在。<br />靠近同类时有 30%
+        概率由对方先开口；按 R 可主动交谈，并用 A / B / C 回复。<br />草层靠近其他草，按
+        E 邀请它们同行；按 F 倾听自己此刻的感受。
       </p>
       <p>
         作为一株草，你会感到阳光的温度、云影、风和雨，<br />根下的水、光合作用，还有自己正在慢慢长高。

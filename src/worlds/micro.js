@@ -1,4 +1,5 @@
 import * as THREE from '../../vendor/three.module.js';
+import { sameKindEncounters } from '../content/encounters.js';
 import { grassSpecies } from '../content/grass-feelings.js';
 import {
   BASE_HEIGHT_CM,
@@ -233,6 +234,19 @@ void main() {
       rock(scene, x, z, rand(0.08, 0.55), microHeight);
     }
     world.avatar = flora.tuft(scene, 'tuft', 'self', 0, 0, AVATAR_SIZE);
+    const sameKind = flora.tuft(
+      scene,
+      'tuft',
+      'self',
+      1.8,
+      -3.2,
+      AVATAR_SIZE * 0.86,
+    );
+    world.sameKind = {
+      object: sameKind,
+      range: 4.5,
+      ...sameKindEncounters[0],
+    };
 
     const daisy = flora.hero(
       scene,

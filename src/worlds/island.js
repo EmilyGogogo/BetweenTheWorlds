@@ -1,4 +1,5 @@
 import * as THREE from '../../vendor/three.module.js';
+import { sameKindEncounters } from '../content/encounters.js';
 
 export function makeIsland(tools) {
   const {
@@ -102,6 +103,13 @@ export function makeIsland(tools) {
     addClouds(s);
     water(s);
     w.avatar = island(s);
+    const sameKind = island(s, 0.72);
+    sameKind.position.set(60, 0, -55);
+    w.sameKind = {
+      object: sameKind,
+      range: 100,
+      ...sameKindEncounters[2],
+    };
     for (let i = 0; i < 9; i++) {
       const a = i * 2.399,
         r = rand(175, 520);
