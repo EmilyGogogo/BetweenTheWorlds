@@ -788,6 +788,9 @@ function animate() {
   if (time > talkUntil) $('encounter').classList.remove('visible');
   if (time > toastUntil) $('toast').classList.remove('visible');
   renderer.render(w.scene, camera);
+  // Keep loading state in sync with the rendered scene; throttled telemetry
+  // can retain the previous world's status for another 30 frames.
+  canvas.dataset.avatar = w.avatarState ?? 'built-in';
   if (frame % 30 === 0) {
     canvas.dataset.position = `${w.position.x.toFixed(2)},${w.position.z.toFixed(2)}`;
     canvas.dataset.followers = w.followers.length;
@@ -795,7 +798,6 @@ function animate() {
     canvas.dataset.altitude = w.position.y.toFixed(2);
     if (w.environment) canvas.dataset.weather = w.environment.state.weather;
     canvas.dataset.drawcalls = renderer.info.render.calls;
-    canvas.dataset.avatar = w.avatarState ?? 'built-in';
     if (w.weather) canvas.dataset.weather = w.weather;
   }
 }

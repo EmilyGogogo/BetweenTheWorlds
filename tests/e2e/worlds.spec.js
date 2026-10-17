@@ -83,6 +83,9 @@ test('built game supports exploration, switching and session-only state without 
       page.locator(`button[data-world="${Number(key) - 1}"]`),
     ).toHaveAttribute('aria-pressed', 'true');
     if (key === '2') {
+      // With the clock paused, the human scene must publish its own loading
+      // state before the next 30-frame telemetry refresh.
+      await expect(canvas).toHaveAttribute('data-avatar', /^(loading|ready)$/);
       // The human avatar is a real glTF download; keep rendering frames until
       // the scene reports the model attached, or fail if it never does.
       await expect
@@ -117,6 +120,7 @@ test.afterEach(async ({ page }, testInfo) => {
   if (testInfo.status === testInfo.expectedStatus || page.isClosed()) return;
   const state = await page.locator('body').evaluate((body) => ({
     position: body.querySelector('#world')?.dataset.position,
+    avatar: body.querySelector('#world')?.dataset.avatar,
     world: body.dataset.world,
     encounter: body.querySelector('#encounter')?.className,
     thought: body.querySelector('#thought')?.textContent,
