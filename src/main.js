@@ -81,7 +81,13 @@ async function switchWorld(index) {
   $('veil').classList.add('covered');
   await new Promise((r) => setTimeout(r, reduced ? 20 : 480));
   try {
-    getWorld(index);
+    const w = getWorld(index);
+    if (w.avatarReady && !w.avatarNotified) {
+      w.avatarNotified = true;
+      w.avatarReady.then((ok) => {
+        if (!ok) toast('人物模型未能加载，场景仍可探索。');
+      });
+    }
     active = index;
     zoom = 1;
     pitch = index === 2 ? 0.39 : index === 3 ? 0.13 : 0.34;
@@ -405,11 +411,13 @@ function animate() {
     });
   }
   if (active === 1) {
-    w.avatar.userData.limbs.forEach((limb, i) => {
-      limb.rotation.x = moving
-        ? Math.sin(time * 8 + (i < 2 ? 0 : Math.PI)) * 0.48
-        : Math.sin(time * 1.2) * 0.02;
-    });
+    // 模型没有骨骼：用整体起伏、前倾和左右摆动表现步行与呼吸。
+    const body = w.avatar.userData.body;
+    body.position.y = moving
+      ? Math.abs(Math.sin(time * 8)) * 0.05
+      : Math.sin(time * 1.2) * 0.008;
+    body.rotation.z = moving ? Math.sin(time * 8) * 0.03 : 0;
+    body.rotation.x += ((moving ? -0.07 : 0) - body.rotation.x) * 0.1;
     if (w.sun) {
       w.sun.position.set(w.position.x - 60, 58, w.position.z - 75);
       w.sun.target.position.copy(w.avatar.position);
@@ -430,6 +438,7 @@ function animate() {
     canvas.dataset.position = `${w.position.x.toFixed(2)},${w.position.z.toFixed(2)}`;
     canvas.dataset.followers = worlds[0].followers.length;
     canvas.dataset.drawcalls = renderer.info.render.calls;
+    canvas.dataset.avatar = w.avatarState ?? 'built-in';
   }
 }
 try {

@@ -73,6 +73,16 @@ test('built game supports exploration, switching and session-only state without 
     await expect(
       page.locator(`button[data-world="${Number(key) - 1}"]`),
     ).toHaveAttribute('aria-pressed', 'true');
+    if (key === '2') {
+      // The human avatar is a real glTF download; keep rendering frames until
+      // the scene reports the model attached, or fail if it never does.
+      await expect
+        .poll(async () => {
+          await advanceGame(page, 200);
+          return canvas.getAttribute('data-avatar');
+        })
+        .toBe('ready');
+    }
   }
   await expect(page.locator('#companion-count')).toHaveText('1');
   await page.locator('#help').click();

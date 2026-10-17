@@ -17,6 +17,8 @@ test('static server serves modules but never repository metadata or secrets', as
     ['/', 'text/html'],
     ['/src/main.js', 'text/javascript'],
     ['/src/styles.css', 'text/css'],
+    ['/vendor/examples/jsm/loaders/GLTFLoader.js', 'text/javascript'],
+    ['/assets/models/human-avatar.glb', 'model/gltf-binary'],
   ]) {
     const response = await fetch(origin + pathname);
     assert.equal(response.status, 200, pathname);

@@ -2,7 +2,7 @@
 
 ## 运行方式
 
-浏览器直接加载静态 HTML、CSS 和 ES Modules，不需要应用框架、后端或打包器。Three.js r170 从原始 HTML 的内嵌模块按字节提取到 `vendor/`，本次未升级引擎。Node.js 仅用于本地服务、检查、测试和静态发布目录生成。
+浏览器直接加载静态 HTML、CSS 和 ES Modules，不需要应用框架、后端或打包器。Three.js r170 从原始 HTML 的内嵌模块按字节提取到 `vendor/`，本次未升级引擎；同版本的 glTF 加载器原件放在 `vendor/examples/jsm/`，它的 `three` 裸导入由 `index.html` 中的 import map 解析到同一个引擎文件。Node.js 仅用于本地服务、检查、测试和静态发布目录生成。
 
 ```text
 index.html                 语义结构、入口与操作提示
@@ -16,6 +16,7 @@ src/worlds/micro.js        草层
 src/worlds/human.js        人层
 src/worlds/island.js       岛屿层
 src/worlds/space.js        星球层
+assets/                    运行时加载的媒体资源及其来源登记
 vendor/                    保持原件的引擎与第三方许可
 prototypes/                原始附件及 SHA-256 清单
 scripts/                   受限静态服务与发布复制脚本
@@ -28,7 +29,7 @@ docs/                      方向、任务、验证、维护与决策
 
 `createWorldFactory(renderer)` 为本次会话创建共享工具与四个 builder；每个 builder 返回自己的场景状态。层顺序固定为草、人、岛屿、星球，与 `descriptions`、按钮索引和快捷键一致。改动顺序需要同步这些调用方与测试。
 
-场景状态包含 `scene`、`position`、`avatar`、`talkers`、`followers`、`recruitables`。对白实体包含 `object`、`range`、`name`、`lines`，每条 `lines` 记录正文与来源说明。层特有数据由所属模块创建，主循环只更新实际需要的部分。
+场景状态包含 `scene`、`position`、`avatar`、`talkers`、`followers`、`recruitables`。人层的 `avatar` 是一个空组，模型在会话开始时预加载并挂到 `avatar.userData.body` 上；`avatarState` 取 `loading`、`ready` 或 `failed`，主控制器据此提示加载失败并把状态写到画布的 `data-avatar`。对白实体包含 `object`、`range`、`name`、`lines`，每条 `lines` 记录正文与来源说明。层特有数据由所属模块创建，主循环只更新实际需要的部分。
 
 共享工具作为参数注入四层，避免场景直接依赖主控制器。地面高度函数同时用于地形、角色和镜头，修改时三者需要一起验证。
 
