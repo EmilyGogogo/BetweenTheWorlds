@@ -335,6 +335,123 @@ kbd {
   color: #ddd5c2a0;
   letter-spacing: 2px;
 }
+#feeling {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  max-width: 270px;
+  padding: 12px 16px 11px;
+  background: #182b23b8;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s;
+}
+#feeling::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 10px;
+  height: 10px;
+  background: #182b23;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  transform: translateX(-50%) rotate(45deg);
+}
+#feeling.visible {
+  opacity: 1;
+}
+#feeling.offscreen {
+  opacity: 0;
+}
+#feeling-speaker {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: #e9d299;
+}
+#feeling-text {
+  font-family: 'Noto Serif SC', 'Songti SC', serif;
+  font-size: 14px;
+  line-height: 1.8;
+  letter-spacing: 1.5px;
+  margin: 6px 0 4px;
+}
+#feeling-source {
+  font-size: 8px;
+  color: #ddd5c2a0;
+  letter-spacing: 1px;
+}
+#senses {
+  position: fixed;
+  right: 40px;
+  top: 128px;
+  width: 172px;
+  z-index: 3;
+  padding: 12px 14px;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--dim);
+  background: #182b2380;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  backdrop-filter: blur(12px);
+}
+.senses-title {
+  font-size: 8px;
+  letter-spacing: 3px;
+  margin-bottom: 9px;
+}
+#senses dl {
+  margin: 0;
+  display: grid;
+  gap: 7px;
+}
+#senses dl div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+#senses dd {
+  margin: 0;
+  color: var(--cream);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.meter {
+  display: inline-block;
+  width: 56px;
+  height: 3px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #eee6cb26;
+}
+.meter::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: var(--level, 0%);
+  background: #e7cf96;
+  transition: width 1s;
+}
+#meter-water::after {
+  background: #9cc4dc;
+}
+#meter-photo::after {
+  background: #b9d77a;
+}
+.senses-hint {
+  margin-top: 10px;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 #invite {
   position: fixed;
   bottom: 148px;
@@ -547,6 +664,10 @@ body[data-world='3'] #veil {
   #thought {
     font-size: 17px;
   }
+  #senses {
+    right: 24px;
+    width: 150px;
+  }
 }
 @media (max-height: 650px) {
   .world-label {
@@ -577,6 +698,10 @@ body[data-world='3'] #veil {
   }
   #invite {
     bottom: 120px;
+  }
+  #senses {
+    top: 112px;
+    padding: 9px 12px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
