@@ -112,6 +112,40 @@
     <div id="companions" class="hidden">
       同行 <span id="companion-count">0</span> / 12
     </div>
+    <div id="binocular-mask" class="hidden" aria-hidden="true"></div>
+    <aside id="naturalist" class="hidden" aria-label="当前人物与田野笔记">
+      <button
+        id="character-button"
+        aria-haspopup="dialog"
+        aria-controls="character-panel"
+        title="换一个人物（C）"
+      >
+        <span class="naturalist-eyebrow">此刻的你</span
+        ><strong id="character-name">阿禾</strong
+        ><small id="character-focus">昆虫观察</small><kbd>C</kbd>
+      </button>
+      <div class="naturalist-row">
+        田野笔记 <span id="journal-count">0 / 0</span>
+      </div>
+      <div class="naturalist-row">
+        <kbd>Q</kbd> <span id="ability-name">伏身</span>
+        <span id="ability-state"></span>
+      </div>
+      <div id="wind" class="naturalist-row hidden">
+        <span id="wind-arrow" aria-hidden="true">↑</span
+        ><span id="wind-text">风自西南</span>
+      </div>
+    </aside>
+    <div id="observe-hint" class="hidden">
+      <kbd>F</kbd><span id="observe-label"></span
+      ><small id="observe-specialty"></small>
+    </div>
+    <div id="field-note" role="status">
+      <span id="field-note-title"></span>
+      <p id="field-note-text"></p>
+      <p id="field-note-reaction"></p>
+      <small id="field-note-meta"></small>
+    </div>
     <button
       id="soul-ripple"
       class="hidden"
@@ -123,7 +157,10 @@
       <div class="controls">
         <span><kbd>W A S D</kbd> 移动</span
         ><span><span class="mouse-icon">↔</span> 拖动观察</span
-        ><span><kbd>滚轮</kbd> 远近</span>
+        ><span><kbd>滚轮</kbd> 远近</span
+        ><span class="human-only"
+          ><kbd>F</kbd> 观察 <kbd>Q</kbd> 能力 <kbd>Shift</kbd> 轻步</span
+        ><span class="human-only"><kbd>V</kbd> 视角 <kbd>C</kbd> 换人</span>
       </div>
       <nav aria-label="选择存在尺度">
         <div class="nav-label">成为万物 <span>CHOOSE YOUR SCALE</span></div>
@@ -186,6 +223,13 @@
       <p>
         作为一株草，你会感到阳光的温度、云影、风和雨，<br />根下的水、光合作用，还有自己正在慢慢长高。
       </p>
+      <p>
+        人层默认第一人称：看向动物或痕迹按 F 观察，Q 使用人物能力，按住 Shift
+        放轻脚步，V 切换视角，C 换一个人物。不同的人会注意到不同的东西。
+      </p>
+      <p>
+        原野上也住着别人：放羊的、打水的、拾柴的、画画的……他们各过各的日子，走近了会和你打招呼。睡着的人，记得放轻脚步。
+      </p>
       <p>慢下来，靠近石头、花朵或远处的星体。<br />有时，世界会回应你。</p>
       <small
         >对白为游戏原创，部分受《庄子》与《沉思录》启发，非哲学家原话。<br />程序生成
@@ -204,6 +248,37 @@
           >《沉思录》 ↗</a
         >
       </div>
+    </section>
+    <section
+      id="character-panel"
+      class="hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="character-title"
+    >
+      <button id="close-characters" aria-label="关闭人物选择">×</button>
+      <div class="eyebrow">WHO WALKS TODAY</div>
+      <h2 id="character-title">换一双眼睛</h2>
+      <div id="character-list" role="radiogroup" aria-label="选择人物"></div>
+      <div id="character-detail">
+        <h3 id="detail-name"></h3>
+        <p id="detail-meta"></p>
+        <dl>
+          <dt>背景</dt>
+          <dd id="detail-background"></dd>
+          <dt>性格</dt>
+          <dd id="detail-personality"></dd>
+          <dt>小习惯</dt>
+          <dd id="detail-habit"></dd>
+          <dt>专属能力</dt>
+          <dd id="detail-ability"></dd>
+          <dt>偏好</dt>
+          <dd id="detail-preference"></dd>
+          <dt>小缺点</dt>
+          <dd id="detail-flaw"></dd>
+        </dl>
+      </div>
+      <button id="confirm-character">用这双眼睛出发</button>
     </section>
     <div id="loading">正在唤醒原野…</div>
     <noscript>请开启 JavaScript 以进入三维世界。</noscript>
