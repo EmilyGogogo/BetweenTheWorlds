@@ -4,6 +4,7 @@ coverage/
 test-results/
 playwright-report/
 .local/
+.design/
 vendor/
 prototypes/offline-demo.html
 prototypes/original-play-guide.md
