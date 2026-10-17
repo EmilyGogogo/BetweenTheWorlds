@@ -1,6 +1,8 @@
 import * as THREE from '../../vendor/three.module.js';
 import { rng } from '../core/random.js';
-import { attachMoonCompanion } from './earth-moon.js';
+import { createMoonCompanion } from './earth-moon.js';
+import { createSunResponse, sunSettings } from './earth-sun.js';
+import { installEarthActions } from './earth-actions.js';
 
 export function makeSpace(tools) {
   const { newWorld, mesh, mat, rand } = tools;
@@ -107,7 +109,7 @@ export function makeSpace(tools) {
       w.avatar,
     );
     w.globe.rotation.z = 0.15;
-    atmosphere(w.avatar, 24.1);
+    w.atmosphere = atmosphere(w.avatar, 24.1);
     const p = new THREE.Group();
     s.add(p);
     p.position.set(-150, 40, -230);
@@ -163,7 +165,26 @@ export function makeSpace(tools) {
       name: '月亮',
       lines: [['你以为你在独行。我的潮汐，却一直跟着你。', '原创 · 万物之间']],
     });
-    attachMoonCompanion(w, moon);
+    const moonActions = createMoonCompanion(w, moon);
+    const sunBody = new THREE.Group();
+    sunBody.position.set(...sunSettings.position);
+    s.add(sunBody);
+    mesh(
+      new THREE.SphereGeometry(sunSettings.radius, 40, 28),
+      new THREE.MeshBasicMaterial({ color: '#ffe1a0', toneMapped: false }),
+      sunBody,
+    );
+    const halo = atmosphere(sunBody, sunSettings.haloRadius, '#ffd79d', 0.28);
+    const sunActions = createSunResponse(w, sunBody, halo, {
+      object: sunBody,
+      range: sunSettings.talkRange,
+      name: '太阳',
+      lines: [
+        ['光抵达你时，也照见了我们之间。', '原创 · 万物之间'],
+        ['靠近不是占有。你可以带着温暖，继续远行。', '原创 · 万物之间'],
+      ],
+    });
+    installEarthActions(w, moonActions, sunActions);
     // Sparse luminous dust supplies depth without flattening the navigable sky into a picture.
     const hazeGeo = new THREE.BufferGeometry(),
       hp = [];

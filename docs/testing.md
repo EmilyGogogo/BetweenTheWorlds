@@ -49,3 +49,9 @@ Linux 首次安装浏览器可使用 `npx playwright install --with-deps chromiu
 ## 如何报告结果
 
 提交命令和输出摘要，或实际设备上的操作路径与观察。CI 的 Linux/Windows 检查和浏览器检查在 GitHub 运行后才算远端验证；本地 Windows 通过不能写成已验证 Linux、Safari 或移动端。
+
+## V2 的非浏览器回归与用户检查
+
+延续用户指定分工，不运行/新增浏览器自动化、不下载浏览器；保留已有 E2E/CI。新增 earth-sun/earth-actions 的 Node 测试覆盖实际场景矩阵、距离强度、响应/冷却边界与余dt、暂停、组合优先级、启停恢复和重复资源引用；原 Moon测试保留，talkers库存明确更新为三条。结果见 [V2 QA记录](earth-v2-qa-results.md)，用户执行 [S1–S7](earth-v2-manual-qa.md)。
+
+可选性能与heap分析分开运行：普通演示配置采帧时间，诊断会话才尝试DevTools Collect garbage。普通页面没有window.gc或不支持可靠GC/heap是预期情况，记未验证，不配置自动化来强行完成；不以诊断会话的帧率作为正常性能基线。

@@ -18,6 +18,8 @@ src/worlds/human.js        人层
 src/worlds/island.js       岛屿层
 src/worlds/space.js        星球层
 src/worlds/earth-moon.js   现有月亮的邀请、两态和局部轨道
+src/worlds/earth-sun.js    太阳距离光照、回应/冷却、启停恢复
+src/worlds/earth-actions.js Earth 局部主动作选择与一次更新组合
 vendor/                    保持原件的引擎与第三方许可
 prototypes/                原始附件及 SHA-256 清单
 scripts/                   受限静态服务与发布复制脚本
@@ -44,7 +46,19 @@ Earth 保存 `moon`（原 Mesh 引用）、`earthState.moon = {status, phase, in
 
 入轨复用原 Moon，零水平朝向显式选 +X；水平半径 48、高度 5、角速度 0.18rad/游戏秒，中心取最新 `w.position`。帮助/转场/非活动冻结相位；减弱动态时固定相对偏移随行；刷新新建世界重置关系。Moon 保持 scene 子节点，避免继承 globe 自转。月亮与有环星球继续使用原 talkers 与共享 19 秒冷却。
 
-新增代码不创建 GPU/音频资源、监听、RAF 或网络请求；继续沿用场景缓存寿命。新增 Node 测试覆盖逻辑、真实 Three.js 对象装配及动作/提示接口；测试里的纹理绘制 stub 不代表画面验收。实际键鼠、构图与声音由用户按检查单验证。本轮明确跳过浏览器自动化，现有 E2E 与 CI 保留。
+V1 新增代码不创建 GPU/音频资源、监听、RAF 或网络请求；继续沿用场景缓存寿命。新增 Node 测试覆盖逻辑、真实 Three.js 对象装配及动作/提示接口；测试里的纹理绘制 stub 不代表画面验收。实际键鼠、构图与声音由用户按检查单验证。本轮明确跳过浏览器自动化，现有 E2E 与 CI 保留。
+
+## Earth V2 的局部组合与光照
+
+V1 的用户手验已获确认；V2 S1–S7 新体验也已由用户确认通过。`createMoonCompanion` 与 `createSunResponse` 返回局部处理器，不抢占共享回调；兼容 `attachMoonCompanion` 保留。`installEarthActions` 一次安装世界回调，Moon优先、Sun其次，每次 E 重新检查并只执行一个对象；每帧按 Moon→Sun 各更新一次。main、core/world-actions、移动参数和其他世界无需更改。
+
+世界新增 `atmosphere`（原壳引用）、`sunBody`（球体+halo的Group）、`sunHalo` 和内部 `earthActions.{moon,sun}`；`earthState.sun={status,remaining,enabled}` 与原 Moon 状态共存。Sun 主动范围100、talker范围120，三维距离；只追加一条原创 talker，仍走共享对白。
+
+Sun 位于(-110,65,-100)，球半径18、halo半径24；复用原 DirectionalLight，position 来自 Sun、原target移入scene并跟随最新玩家中心，显式更新矩阵。80–150范围内 smoothstep 增强主光3.8–4.75；正常 `1-exp(-4dt)` 插值，减弱动态直接目标。响应3秒后冷却5秒，dt合法正数且最多0.05，余时间跨状态消费。d>150取消回应并从完整5秒冷却开始。
+
+响应仅从保存的原大气色/halo尺度派生一次 sin 包络，暖色#efc58b、最大尺度1.08；减弱动态暖色权重0.35、不缩放。帮助/转场/非活动冻结。Sun内部setEnabled(false)恢复V1原灯光/target父关系/原色/原尺度，移除精确Sun talker；显式enable复用所有资源。意外移除/隐藏/引用失配在下次活动update清理，即使暂停也维护，但不推进动画。正常远离仅恢复距离基线，光仍来自Sun，与禁用恢复旧方向不同。
+
+资源仍随缓存场景保存，无新RAF/监听/网络/音频/卸载协议；新增普通球体与halo仅建一次。Node检查对象/矩阵/引用，GPU/heap/实际帧率未测。可选heap诊断与普通配置性能测量分会话，无强制GC视为常见未验证情况；不影响日常代码工作。
 
 ## 当前限制
 

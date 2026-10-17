@@ -3,6 +3,7 @@ import test from 'node:test';
 import * as THREE from '../../vendor/three.module.js';
 import { attachMoonCompanion } from '../../src/worlds/earth-moon.js';
 import { createWorldFactory } from '../../src/worlds/index.js';
+import { withCanvas } from '../helpers/earth-fixture.mjs';
 import {
   updateActionContext,
   performPrimaryAction,
@@ -233,35 +234,6 @@ test('reduced motion composes with actual repositioning on both axes and diagona
   assert.equal(world.earthState.moon.phase, phase);
 });
 
-// Only the procedural texture's paint calls are stubbed. The factory, Three.js
-// graph, callbacks and transforms are real; no rendering or visual claim is made.
-function withCanvas(run) {
-  const previous = Object.getOwnPropertyDescriptor(globalThis, 'document');
-  const context = Object.fromEntries(
-    [
-      'fillRect',
-      'beginPath',
-      'lineTo',
-      'moveTo',
-      'closePath',
-      'fill',
-      'ellipse',
-    ].map((name) => [name, () => {}]),
-  );
-  context.createLinearGradient = () => ({ addColorStop() {} });
-  context.createRadialGradient = () => ({ addColorStop() {} });
-  Object.defineProperty(globalThis, 'document', {
-    configurable: true,
-    value: { createElement: () => ({ getContext: () => context }) },
-  });
-  try {
-    return run();
-  } finally {
-    if (previous) Object.defineProperty(globalThis, 'document', previous);
-    else delete globalThis.document;
-  }
-}
-
 test('actual Earth factory preserves both talkers and resources through invite/update', () => {
   withCanvas(() => {
     const factory = createWorldFactory({
@@ -270,7 +242,9 @@ test('actual Earth factory preserves both talkers and resources through invite/u
     const world = factory.builders[3]();
     assert.equal(world.earthState.moon.status, 'available');
     assert.deepEqual(world.moon.position.toArray(), [80, 5, -65]);
-    assert.equal(world.talkers.length, 2);
+    assert.equal(world.talkers.length, 3);
+    assert.equal(world.talkers[2].name, '太阳');
+    assert.equal(world.talkers[2].object, world.sunBody);
     const [planetTalker, moonTalker] = world.talkers;
     assert.equal(planetTalker.name, '有环的星球');
     assert.equal(planetTalker.range, 290);
