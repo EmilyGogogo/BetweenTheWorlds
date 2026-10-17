@@ -9,6 +9,7 @@ const contentTypes = {
   '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.txt': 'text/plain; charset=utf-8',
+  '.glb': 'model/gltf-binary',
 };
 
 export function createStaticServer(root) {
@@ -25,7 +26,7 @@ export function createStaticServer(root) {
       const relative = pathname === '/' ? 'index.html' : pathname.slice(1);
       // Only game assets are exposed. Repository metadata and secrets stay private.
       if (
-        !/^(index\.html|(?:src|vendor)\/[\w./-]+)$/.test(relative) ||
+        !/^(index\.html|(?:src|vendor|assets)\/[\w./-]+)$/.test(relative) ||
         relative.split('/').some((part) => part.startsWith('.')) ||
         !contentTypes[extname(relative)]
       ) {

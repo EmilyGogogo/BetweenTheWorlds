@@ -150,7 +150,13 @@ async function switchWorld(index) {
   $('veil').classList.add('covered');
   await new Promise((r) => setTimeout(r, reduced ? 20 : 480));
   try {
-    getWorld(index);
+    const w = getWorld(index);
+    if (w.avatarReady && !w.avatarNotified) {
+      w.avatarNotified = true;
+      w.avatarReady.then((ok) => {
+        if (!ok) toast('人物模型未能加载，场景仍可探索。');
+      });
+    }
     active = index;
     zoom = 1;
     pitch = index === 2 ? 0.39 : index === 3 ? 0.13 : 0.34;
@@ -741,13 +747,26 @@ function animate() {
     });
   }
   if (d.kind === 'human') {
-    w.avatar.userData.limbs.forEach((limb, i) => {
-      limb.rotation.x = moving
-        ? Math.sin(time * 8 + (i < 2 ? 0 : Math.PI)) * 0.48
-        : reduced
-          ? 0
-          : Math.sin(time * 1.2) * 0.02;
-    });
+    const body = w.avatar.userData.body;
+    if (body) {
+      // The glTF avatar has no skeleton; the other characters retain joint animation.
+      body.position.y = reduced
+        ? 0
+        : moving
+          ? Math.abs(Math.sin(time * 8)) * 0.05
+          : Math.sin(time * 1.2) * 0.008;
+      body.rotation.z = !reduced && moving ? Math.sin(time * 8) * 0.03 : 0;
+      body.rotation.x +=
+        ((moving && !reduced ? -0.07 : 0) - body.rotation.x) * 0.1;
+    } else {
+      w.avatar.userData.limbs.forEach((limb, index) => {
+        limb.rotation.x = moving
+          ? Math.sin(time * 8 + (index < 2 ? 0 : Math.PI)) * 0.48
+          : reduced
+            ? 0
+            : Math.sin(time * 1.2) * 0.02;
+      });
+    }
   }
   if (active === 1 && w.sun) {
     w.sun.position.copy(w.avatar.position).add(w.sunOffset);
@@ -776,6 +795,7 @@ function animate() {
     canvas.dataset.altitude = w.position.y.toFixed(2);
     if (w.environment) canvas.dataset.weather = w.environment.state.weather;
     canvas.dataset.drawcalls = renderer.info.render.calls;
+    canvas.dataset.avatar = w.avatarState ?? 'built-in';
     if (w.weather) canvas.dataset.weather = w.weather;
   }
 }
