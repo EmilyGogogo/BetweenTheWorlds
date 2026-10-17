@@ -7,6 +7,10 @@ import {
   primaryActionLabel,
   renderPrimaryAction,
 } from './core/world-actions.js';
+import {
+  createMovementInput,
+  createMovementStepper,
+} from './core/world-movement.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('world');
@@ -37,7 +41,9 @@ const camera = new THREE.PerspectiveCamera(
 );
 const clock = new THREE.Clock();
 const worlds = [];
-const keys = new Set();
+const movementInput = createMovementInput();
+const keys = movementInput.keys;
+const stepMovement = createMovementStepper();
 
 const v = new THREE.Vector3(),
   target = new THREE.Vector3(),
@@ -198,6 +204,12 @@ function refreshActionContext(dt = 0) {
     !$('help-panel').classList.contains('hidden'),
     dt,
   );
+  movementInput.refresh(
+    actionContext,
+    descriptions[active].limit,
+    getWorld(active),
+  );
+  actionContext.stepId = frame;
 }
 function refreshPrimaryAction() {
   refreshActionContext();
@@ -340,7 +352,7 @@ addEventListener('keydown', (e) => {
     ].includes(e.code)
   )
     e.preventDefault();
-  keys.add(e.code);
+  movementInput.keydown(e.code, getWorld(active));
   if (e.code.startsWith('Digit') && +e.key >= 1 && +e.key <= 4)
     switchWorld(+e.key - 1);
   if (e.code === 'KeyE') {
@@ -356,9 +368,9 @@ addEventListener('keydown', (e) => {
     refreshPrimaryAction();
   }
 });
-addEventListener('keyup', (e) => keys.delete(e.code));
+addEventListener('keyup', (e) => movementInput.keyup(e.code));
 addEventListener('blur', () => {
-  keys.clear();
+  movementInput.blur(getWorld(active));
   drag = null;
 });
 canvas.addEventListener('pointerdown', (e) => {
@@ -402,33 +414,17 @@ function animate() {
   windUniform.value = reduced ? 0 : time;
   const w = getWorld(active),
     d = descriptions[active];
-  let dx = 0,
-    dz = 0;
-  if (started && !switching && $('help-panel').classList.contains('hidden')) {
-    if (keys.has('KeyW') || keys.has('ArrowUp')) dz -= 1;
-    if (keys.has('KeyS') || keys.has('ArrowDown')) dz += 1;
-    if (keys.has('KeyA') || keys.has('ArrowLeft')) dx -= 1;
-    if (keys.has('KeyD') || keys.has('ArrowRight')) dx += 1;
-  }
-  const moving = dx !== 0 || dz !== 0;
-  w.moving = moving ? 1 : 0;
-  if (moving) {
-    const len = Math.hypot(dx, dz),
-      x = (dx * Math.cos(yaw) + dz * Math.sin(yaw)) / len,
-      z = (-dx * Math.sin(yaw) + dz * Math.cos(yaw)) / len;
-    w.position.x += x * d.speed * dt;
-    w.position.z += z * d.speed * dt;
-    const dist = Math.hypot(w.position.x, w.position.z);
-    if (dist > d.limit) w.position.multiplyScalar(d.limit / dist);
-    if (active < 2) {
-      const angle = Math.atan2(-x, -z);
-      let delta = angle - w.avatar.rotation.y;
-      delta = Math.atan2(Math.sin(delta), Math.cos(delta));
-      w.avatar.rotation.y += delta * 0.14;
-    }
-  }
   refreshActionContext(dt);
+  const movement = stepMovement(w, d, yaw, keys, actionContext);
+  const moving = movement.moving;
+  if (moving && active < 2) {
+    const angle = Math.atan2(-movement.directionX, -movement.directionZ);
+    let delta = angle - w.avatar.rotation.y;
+    delta = Math.atan2(Math.sin(delta), Math.cos(delta));
+    w.avatar.rotation.y += delta * 0.14;
+  }
   w.update?.(actionContext);
+  movementInput.finishStep(w);
   if (active === 0) {
     w.avatar.rotation.z =
       Math.sin(time * 1.6) * 0.035 + (moving ? Math.sin(time * 8) * 0.04 : 0);

@@ -55,3 +55,9 @@ Linux 首次安装浏览器可使用 `npx playwright install --with-deps chromiu
 延续用户指定分工，不运行/新增浏览器自动化、不下载浏览器；保留已有 E2E/CI。新增 earth-sun/earth-actions 的 Node 测试覆盖实际场景矩阵、距离强度、响应/冷却边界与余dt、暂停、组合优先级、启停恢复和重复资源引用；原 Moon测试保留，talkers库存明确更新为三条。结果见 [V2 QA记录](earth-v2-qa-results.md)，用户执行 [S1–S7](earth-v2-manual-qa.md)。
 
 可选性能与heap分析分开运行：普通演示配置采帧时间，诊断会话才尝试DevTools Collect garbage。普通页面没有window.gc或不支持可靠GC/heap是预期情况，记未验证，不配置自动化来强行完成；不以诊断会话的帧率作为正常性能基线。
+
+## V3 的非浏览器回归与用户检查
+
+按相同分工执行`npm run check`，不运行/新增浏览器自动化、不下载浏览器，保留已有E2E/CI。新增world-movement与earth-ringed-planet测试：真实生产正常位移、四层速度/边界、输入锁存、非法请求、实际反馈与预算、真实工厂组合、2秒/12单位/6秒边界、暂停/取消、启停、减弱动态与资源引用稳定。全部原38项有效测试不删不放宽。主循环事件与镜头顺序另作源码审查，真实事件接线和显示依赖用户[T1–T7](earth-v3-manual-qa.md)，记录见[V3 QA](earth-v3-qa-results.md)。
+
+可选heap/GC诊断使用单独的诊断会话，可能需要启动标志、CDP或DevTools；普通页面不能可靠强制GC是预期情况，记未验证，Node引用稳定不能证明无泄漏。正式性能使用与基线一致的普通无特殊标志配置，避免诊断/DevTools开销，不混用两个会话的帧时间。两项均不是日常手验前置。

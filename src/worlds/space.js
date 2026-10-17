@@ -3,6 +3,10 @@ import { rng } from '../core/random.js';
 import { createMoonCompanion } from './earth-moon.js';
 import { createSunResponse, sunSettings } from './earth-sun.js';
 import { installEarthActions } from './earth-actions.js';
+import {
+  createRingedPlanet,
+  ringedMovementLimits,
+} from './earth-ringed-planet.js';
 
 export function makeSpace(tools) {
   const { newWorld, mesh, mat, rand } = tools;
@@ -142,7 +146,7 @@ export function makeSpace(tools) {
       p,
     );
     ring.rotation.x = 1.14;
-    w.talkers.push({
+    const ringedTalker = {
       object: p,
       range: 290,
       name: '有环的星球',
@@ -150,7 +154,10 @@ export function makeSpace(tools) {
         ['你用距离衡量遥远，用自己衡量一切。', '原创 · 万物之间'],
         ['我们并不独立。引力一直在无声地交谈。', '原创 · 万物之间'],
       ],
-    });
+    };
+    w.talkers.push(ringedTalker);
+    const ringedActions = createRingedPlanet(w, p, gas, ring, ringedTalker);
+    w.movementInfluenceLimits = ringedMovementLimits;
     const moon = mesh(
       new THREE.IcosahedronGeometry(9, 3),
       mat('#92918a', { flatShading: true }),
@@ -184,7 +191,7 @@ export function makeSpace(tools) {
         ['靠近不是占有。你可以带着温暖，继续远行。', '原创 · 万物之间'],
       ],
     });
-    installEarthActions(w, moonActions, sunActions);
+    installEarthActions(w, moonActions, sunActions, ringedActions);
     // Sparse luminous dust supplies depth without flattening the navigable sky into a picture.
     const hazeGeo = new THREE.BufferGeometry(),
       hp = [];
