@@ -83,6 +83,14 @@ export function makeHuman(tools, avatarModel) {
       object: t,
       range: 24,
       name: '老树',
+      embodiment: {
+        kind: 'tree',
+        height: 10,
+        distance: 42,
+        speed: 9,
+        scale: '≈ 20 米',
+        range: 130,
+      },
       lines: [
         ['世界并不在你到来之后，才开始存在。', '原创 · 万物之间'],
         ['你借用的每一口呼吸，都曾属于别的生命。', '原创 · 万物之间'],
@@ -93,6 +101,14 @@ export function makeHuman(tools, avatarModel) {
       object: r,
       range: 13,
       name: '岩石',
+      embodiment: {
+        kind: 'rock',
+        height: 1,
+        distance: 16,
+        speed: 3,
+        range: 85,
+        ground: (x, z) => groundHeight(x, z) + 1.3,
+      },
       lines: [
         ['你站在我身旁，称自己为中心。风却不认识中心。', '原创 · 万物之间'],
       ],
