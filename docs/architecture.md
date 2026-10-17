@@ -49,3 +49,7 @@ docs/                      方向、任务、验证、维护与决策
 每个尺度的视觉与实体改动优先限定在对应文件。改动 `main.js`、`shared.js`、层索引、工具参数、根规范或 CI 时，在关联任务中先说明影响。对白暂在各场景内，独立内容结构与音频模块是后续任务，不能假定已经存在。
 
 新增事件监听必须有明确生命周期；新增 GPU/音频资源说明复用与释放策略。性能测量记录设备、浏览器、操作路径与测量方法，不用主观“流畅”代替证据。
+
+## 魂穿契约
+
+`src/core/embodiment.js` 在场景构建后登记默认身体、显式 entities、对白实体与可招募对象。controlled 指向当前实体，avatar 和 position 引用其物体及变换。original 保留原身体引用，返回同样要求靠近并进入视野。实体覆盖 kind、distance、height、speed、limit、scale、range 和 ground；飞行/游泳使用 mode 与空的 ground。portal 指向目标场景。followLeader 保存群体最后的同类领队，recruitables[].entity 指向对应实体。findSoulTarget 依据距离和投影选定唯一候选，main 以同一候选驱动无文字涟漪和 R；天空太阳仅在视线对准时作为跨尺度入口。场景可通过 update(dt, time, reduced) 更新环境。调用方包括 main 与四个场景，见 [魂穿决策](decisions/0002-embodiment.md) 和 [共同语言](../GLOSSARY.md)。

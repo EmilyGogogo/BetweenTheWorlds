@@ -97,6 +97,45 @@ export function makeSpace(tools) {
         }),
       ),
     );
+    const solar = new THREE.Group();
+    solar.position.set(-370, 130, -420);
+    s.add(solar);
+    mesh(
+      new THREE.SphereGeometry(58, 48, 32),
+      new THREE.ShaderMaterial({
+        uniforms: { uTime: tools.windUniform },
+        vertexShader: `varying vec3 vSurface;
+          void main(){vSurface=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
+        fragmentShader: `uniform float uTime;varying vec3 vSurface;
+          float hash(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
+          float noise(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+            return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
+              mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);}
+          void main(){vec3 p=vSurface*18.+vec3(uTime*.035,0,0);
+            float cells=noise(p)*.6+noise(p*3.)*.3+noise(p*9.)*.1;
+            vec3 color=mix(vec3(.94,.30,.055),vec3(1.,.86,.46),smoothstep(.1,.85,cells));
+            gl_FragColor=vec4(color*1.35,1.);}`,
+      }),
+      solar,
+    );
+    atmosphere(solar, 65, '#ffab48', 0.9);
+    atmosphere(solar, 78, '#e3742e', 0.28);
+    w.entities = [
+      {
+        object: solar,
+        name: '太阳',
+        kind: 'sun',
+        celestial: true,
+        range: 700,
+        distance: 220,
+        height: 0,
+        speed: 35,
+        limit: 1300,
+        ground: null,
+        scale: '≈ 140 万千米',
+      },
+    ];
+    w.primary = { ground: null };
     const tex = planetTexture();
     w.avatar = new THREE.Group();
     s.add(w.avatar);
@@ -106,6 +145,11 @@ export function makeSpace(tools) {
       w.avatar,
     );
     w.globe.rotation.z = 0.15;
+    s.add(sun.target);
+    w.update = () => {
+      sun.position.copy(solar.position);
+      sun.target.position.copy(w.original.object.position);
+    };
     atmosphere(w.avatar, 24.1);
     const p = new THREE.Group();
     s.add(p);
@@ -143,6 +187,16 @@ export function makeSpace(tools) {
       object: p,
       range: 290,
       name: '有环的星球',
+      embodiment: {
+        kind: 'planet',
+        height: 0,
+        distance: 280,
+        speed: 30,
+        range: 650,
+        limit: 1100,
+        ground: null,
+        scale: '≈ 10 万千米',
+      },
       lines: [
         ['你用距离衡量遥远，用自己衡量一切。', '原创 · 万物之间'],
         ['我们并不独立。引力一直在无声地交谈。', '原创 · 万物之间'],
@@ -160,6 +214,16 @@ export function makeSpace(tools) {
       object: moon,
       range: 75,
       name: '月亮',
+      embodiment: {
+        kind: 'moon',
+        height: 0,
+        distance: 52,
+        speed: 24,
+        range: 500,
+        limit: 1100,
+        ground: null,
+        scale: '≈ 3500 千米',
+      },
       lines: [['你以为你在独行。我的潮汐，却一直跟着你。', '原创 · 万物之间']],
     });
     // Sparse luminous dust supplies depth without flattening the navigable sky into a picture.

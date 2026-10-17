@@ -115,3 +115,163 @@ test.afterEach(async ({ page }, testInfo) => {
   }));
   console.error('Browser smoke failure state:', JSON.stringify(state));
 });
+
+test('looking toward the sun offers a ripple and R enters the actual solar body', async ({
+  page,
+}) => {
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  const startTime = new Date('2026-10-17T00:00:00Z');
+  await page.clock.install({ time: startTime });
+  await page.clock.pauseAt(startTime);
+  await page.goto('/');
+  await page.locator('#begin').click();
+  await advanceGame(page, 1500);
+  // Orbit using the real pointer, then look up from the grass toward the sun.
+  await page.mouse.move(480, 320);
+  await page.mouse.down();
+  await page.mouse.move(434, 220, { steps: 10 });
+  await page.mouse.up();
+  await advanceGame(page, 1500);
+  await expect(page.locator('#world')).toHaveAttribute(
+    'data-soul-target',
+    '太阳',
+  );
+  await expect(page.locator('#soul-ripple')).toBeVisible();
+  await page.keyboard.press('r');
+  await advanceGame(page, 1500);
+  await expect(page.locator('body')).toHaveAttribute('data-world', '3');
+  await expect(page.locator('#world-name')).toHaveText('太阳');
+  await expect(page.locator('#world')).toHaveAttribute('data-entity', 'sun');
+  expect(errors).toEqual([]);
+});
+
+test('a seagull can approach the fish ripple, become a fish and explore underwater', async ({
+  page,
+}) => {
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text());
+  });
+  const startTime = new Date('2026-10-17T00:00:00Z');
+  await page.clock.install({ time: startTime });
+  await page.clock.pauseAt(startTime);
+  await page.goto('/?world=island');
+  await page.locator('#begin').click();
+  await advanceGame(page, 1500);
+  const canvas = page.locator('#world');
+  await expect(canvas).toHaveAttribute('data-soul-target', '海鸥');
+  await page.keyboard.press('r');
+  await advanceGame(page, 1500);
+  await expect(canvas).toHaveAttribute('data-entity', 'bird');
+  async function move(key, duration) {
+    await page.keyboard.down(key);
+    try {
+      await advanceGame(page, duration);
+    } finally {
+      await page.keyboard.up(key);
+    }
+  }
+  const birdBefore = await canvas.getAttribute('data-position');
+  await move('d', 3000);
+  const birdAfter = await canvas.getAttribute('data-position');
+  expect(
+    Number(birdAfter.split(',')[0]) - Number(birdBefore.split(',')[0]),
+  ).toBeGreaterThan(75);
+  await move('ShiftLeft', 2500);
+  await expect(canvas).toHaveAttribute('data-soul-target', /^银鳍鱼/);
+  await page.keyboard.press('r');
+  await advanceGame(page, 1500);
+  await expect(canvas).toHaveAttribute('data-entity', 'fish');
+  await move('ShiftLeft', 1500);
+  expect(Number(await canvas.getAttribute('data-altitude'))).toBeLessThan(-5);
+  const fishBefore = await canvas.getAttribute('data-position');
+  await move('w', 1500);
+  expect(await canvas.getAttribute('data-position')).not.toBe(fishBefore);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('R enters the rippling body directly in all four scales, without a selector', async ({
+  page,
+}) => {
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => {
+    if (message.type() === 'error') errors.push(message.text());
+  });
+  const startTime = new Date('2026-10-17T00:00:00Z');
+  await page.clock.install({ time: startTime });
+  await page.clock.pauseAt(startTime);
+  await page.goto('/');
+  await expect(page.locator('#loading')).toBeHidden();
+  // R before entering the game has no effect.
+  await page.keyboard.press('r');
+  await expect(page.locator('#world-name')).toHaveText('一株草');
+  await expect(page.locator('#soul-ripple')).toBeHidden();
+  await page.locator('#begin').click();
+  await advanceGame(page, 1500);
+  const canvas = page.locator('#world');
+  const ripple = page.locator('#soul-ripple');
+  async function enterRipple() {
+    await expect(ripple).toBeVisible();
+    const name = await canvas.getAttribute('data-soul-target');
+    expect(name).toBeTruthy();
+    await expect(ripple).toHaveText('');
+    await page.keyboard.press('r');
+    await advanceGame(page, 1500);
+    await expect(page.locator('#world-name')).toHaveText(name);
+    // Help and welcome are the only dialogs in the scene.
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+  }
+  async function move(key, duration = 1500) {
+    await page.keyboard.down(key);
+    try {
+      await advanceGame(page, duration);
+    } finally {
+      await page.keyboard.up(key);
+    }
+  }
+  await enterRipple();
+  const grassBefore = await canvas.getAttribute('data-position');
+  await move('w');
+  expect(await canvas.getAttribute('data-position')).not.toBe(grassBefore);
+  await page.keyboard.press('2');
+  await advanceGame(page, 1500);
+  await enterRipple();
+  const treeBefore = await canvas.getAttribute('data-position');
+  await move('w');
+  expect(await canvas.getAttribute('data-position')).not.toBe(treeBefore);
+  await page.keyboard.press('3');
+  await advanceGame(page, 1500);
+  await expect(page.locator('#invite')).toBeVisible();
+  await page.keyboard.press('e');
+  await expect(page.locator('#companion-count')).toHaveText('1');
+  await enterRipple();
+  await expect(canvas).toHaveAttribute('data-entity', 'bird');
+  const altitude = Number(await canvas.getAttribute('data-altitude'));
+  await move('Space');
+  expect(Number(await canvas.getAttribute('data-altitude'))).toBeGreaterThan(
+    altitude + 4,
+  );
+  await page.keyboard.press('4');
+  await advanceGame(page, 1500);
+  await enterRipple();
+  const spaceBefore = await canvas.getAttribute('data-position');
+  await move('d');
+  expect(await canvas.getAttribute('data-position')).not.toBe(spaceBefore);
+  await page.keyboard.press('3');
+  await advanceGame(page, 1500);
+  await expect(canvas).toHaveAttribute('data-entity', 'bird');
+  await expect(page.locator('#companion-count')).toHaveText('1');
+  await page.locator('#help').click();
+  await advanceGame(page, 650);
+  await expect(ripple).toBeHidden();
+  const beforeHelp = await page.locator('#world-name').textContent();
+  await page.keyboard.press('r');
+  await expect(page.locator('#world-name')).toHaveText(beforeHelp);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#help-panel')).toBeHidden();
+  expect(errors).toEqual([]);
+});
