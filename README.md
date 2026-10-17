@@ -4,6 +4,10 @@
 
 这是一个探索中的浏览器 3D 体验。当前仓库将第一版 Demo 整理为可运行、可审阅的协作基线；产品方向仍然开放，欢迎策划、开发、视觉、声音和试玩反馈一起参与。
 
+## 发布为在线试玩
+
+游戏只有前端，可直接用 GitHub Pages 托管。仓库提供 `.github/workflows/pages.yml`：配置合并到 `main` 后，在仓库 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**。之后每次合并到 `main`，检查和浏览器测试通过后会自动发布 `dist/`，网站地址保持不变。首次开启、预期地址与回退步骤见 [发布指南](docs/deployment.md)（`RELEASE-01`）。
+
 ## 先试玩
 
 两种方式都需要支持 WebGL 2 的桌面浏览器。

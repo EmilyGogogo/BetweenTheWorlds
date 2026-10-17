@@ -150,6 +150,7 @@ vite.config.ts.timestamp-*
 
 # Local collaboration tooling
 .local/
+.design/
 playwright-report/
 test-results/
 .DS_Store
