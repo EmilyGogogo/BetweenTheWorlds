@@ -1,5 +1,8 @@
 import * as THREE from '../vendor/three.module.js';
+import { feelingTopics, weatherArrivals } from './content/grass-feelings.js';
 import { descriptions } from './content/worlds.js';
+import { chooseFeeling } from './core/feelings.js';
+import { heightCm } from './core/grass-environment.js';
 import { createWorldFactory } from './worlds/index.js';
 
 const $ = (id) => document.getElementById(id);
@@ -49,6 +52,14 @@ let active = 0,
 let lastTalk = -30,
   talkUntil = -1,
   toastUntil = 0;
+// The grass layer's spoken sensations, shown in a bubble above the speaker.
+const FEELING_SECONDS = 7.5;
+const feelingBox = $('feeling');
+const feelingPoint = new THREE.Vector3();
+const recentFeelings = [];
+let feeling = null,
+  nextFeeling = 0,
+  lastSelfFeeling = -10;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const { builders, rand, microHeight, groundHeight, windUniform } =
   createWorldFactory(renderer);
@@ -70,12 +81,29 @@ function updateUI() {
     b.setAttribute('aria-pressed', on);
   });
   $('companions').classList.toggle('hidden', active !== 0);
+  $('senses').classList.toggle('hidden', active !== 0 || !started);
   $('companion-count').textContent = getWorld(0).followers.length;
+  updateSenses();
+}
+function setMeter(id, value) {
+  const percent = Math.round(value * 100);
+  $(id).style.setProperty('--level', `${percent}%`);
+  $(id).setAttribute('aria-valuenow', percent);
+}
+function updateSenses() {
+  const env = getWorld(0).environment.state;
+  $('sense-weather').textContent = env.label;
+  $('sense-warmth').textContent = `${Math.round(env.temperature)}°C`;
+  setMeter('meter-sun', env.sun);
+  setMeter('meter-water', env.moisture);
+  setMeter('meter-photo', env.photosynthesis);
+  $('sense-height').textContent = `${heightCm(env).toFixed(1)} 厘米`;
 }
 async function switchWorld(index) {
   if (index === active || switching || !started) return;
   switching = true;
   keys.clear();
+  hideFeeling();
   $('encounter').classList.remove('visible');
   $('invite').classList.add('hidden');
   $('veil').classList.add('covered');
@@ -139,6 +167,7 @@ function toast(text) {
   toastUntil = time + 4;
 }
 function say(talker) {
+  hideFeeling();
   const line = talker.lines[Math.floor(rand(0, talker.lines.length))];
   $('speaker').textContent = talker.name + ' · 低语';
   $('thought').textContent = line[0];
@@ -188,6 +217,98 @@ function encounter() {
     }
   }
   $('invite').classList.toggle('hidden', !nearGrass);
+  if (active === 0) senseFeelings(w);
+}
+
+function feelFor(species = null) {
+  const w = getWorld(0);
+  return chooseFeeling(w.environment.state, {
+    topics: feelingTopics,
+    species,
+    followers: w.followers.length,
+    recent: recentFeelings,
+    random: () => rand(0, 1),
+  });
+}
+function showFeeling(target, speaker, choice, lift) {
+  $('feeling-speaker').textContent = speaker;
+  $('feeling-text').textContent = choice.text;
+  $('feeling-source').textContent = choice.source;
+  feelingBox.classList.add('visible');
+  feeling = { target, lift, until: time + FEELING_SECONDS };
+  recentFeelings.push(choice.key);
+  if (recentFeelings.length > 8) recentFeelings.shift();
+  nextFeeling = time + rand(22, 34);
+  positionFeeling();
+}
+function hideFeeling() {
+  feeling = null;
+  feelingBox.classList.remove('visible');
+}
+function feelSelf(speaker = '你 · 此刻的感受', choice = feelFor()) {
+  const avatar = getWorld(0).avatar;
+  lastSelfFeeling = time;
+  showFeeling(avatar, speaker, choice, 1.15 * avatar.scale.y);
+}
+function feelPlant(plant, role) {
+  showFeeling(
+    plant.object,
+    `${plant.species.name} · ${role}`,
+    feelFor(plant.species),
+    1.25 * plant.object.scale.y,
+  );
+}
+function listenToSelf() {
+  if (active !== 0 || !started || switching) return;
+  if (time - lastSelfFeeling < 2.5) return;
+  feelSelf();
+}
+// Priority: a weather change, then a newly met plant, then an idle thought
+// from you or one of your companions. The encounter panel always goes first.
+function senseFeelings(w) {
+  if (!started || switching || time < talkUntil) return;
+  if (w.weatherEvent) {
+    const lines = weatherArrivals[w.weatherEvent];
+    w.weatherEvent = null;
+    const [text, source] = lines[Math.floor(rand(0, lines.length))];
+    feelSelf(`你 · ${w.environment.state.label}`, { text, source, key: text });
+    return;
+  }
+  if (feeling) return;
+  if (nearGrass && time - (nearGrass.lastFelt ?? -Infinity) > 40) {
+    nearGrass.lastFelt = time;
+    feelPlant(nearGrass, '它的感受');
+    return;
+  }
+  if (time < nextFeeling) return;
+  if (w.followers.length && rand(0, 1) < 0.4)
+    feelPlant(w.followers[Math.floor(rand(0, w.followers.length))], '同行者');
+  else feelSelf();
+}
+function positionFeeling() {
+  if (!feeling) return;
+  camera.updateMatrixWorld();
+  feeling.target.getWorldPosition(feelingPoint);
+  feelingPoint.y += feeling.lift;
+  feelingPoint.project(camera);
+  const offscreen =
+    feelingPoint.z > 1 ||
+    Math.abs(feelingPoint.x) > 1.1 ||
+    Math.abs(feelingPoint.y) > 1.1;
+  feelingBox.classList.toggle('offscreen', offscreen);
+  if (offscreen) return;
+  const x = Math.min(
+    innerWidth - 150,
+    Math.max(150, (feelingPoint.x * 0.5 + 0.5) * innerWidth),
+  );
+  const y = Math.min(
+    innerHeight - 200,
+    Math.max(
+      feelingBox.offsetHeight + 150,
+      (-feelingPoint.y * 0.5 + 0.5) * innerHeight,
+    ),
+  );
+  feelingBox.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
 }
 
 let audio = null;
@@ -273,6 +394,8 @@ $('begin').onclick = () => {
   $('welcome').style.pointerEvents = 'none';
   setTimeout(() => $('welcome').classList.add('hidden'), 1000);
   lastTalk = time - 12;
+  nextFeeling = time + 14;
+  updateUI();
   toggleAudio();
   toast('按住鼠标拖动观察，W A S D 自由移动。');
 };
@@ -311,6 +434,7 @@ addEventListener('keydown', (e) => {
   if (e.code.startsWith('Digit') && +e.key >= 1 && +e.key <= 4)
     switchWorld(+e.key - 1);
   if (e.code === 'KeyE' && !e.repeat) recruit();
+  if (e.code === 'KeyF' && !e.repeat) listenToSelf();
 });
 addEventListener('keyup', (e) => keys.delete(e.code));
 addEventListener('blur', () => {
@@ -421,14 +545,21 @@ function animate() {
   }
   if (active === 3) w.globe.rotation.y += dt * 0.018;
   if (w.particles && !reduced) w.particles.rotation.y = time * 0.003;
+  if (w.update) w.update(dt, time, reduced);
   placeCamera();
   if (frame % 12 === 0) encounter();
+  if (feeling) {
+    if (time > feeling.until) hideFeeling();
+    else positionFeeling();
+  }
+  if (active === 0 && started && frame % 30 === 0) updateSenses();
   if (time > talkUntil) $('encounter').classList.remove('visible');
   if (time > toastUntil) $('toast').classList.remove('visible');
   renderer.render(w.scene, camera);
   if (frame % 30 === 0) {
     canvas.dataset.position = `${w.position.x.toFixed(2)},${w.position.z.toFixed(2)}`;
     canvas.dataset.followers = worlds[0].followers.length;
+    canvas.dataset.weather = worlds[0].environment.state.weather;
     canvas.dataset.drawcalls = renderer.info.render.calls;
   }
 }

@@ -118,25 +118,6 @@ export function createWorldTools(renderer) {
     parent.add(o);
     return o;
   }
-  function plant(parent, x, z, size = 1) {
-    const g = new THREE.Group();
-    parent.add(g);
-    g.position.set(x, microHeight(x, z), z);
-    g.scale.setScalar(size);
-    const m = mat('#adc66b', {
-      side: THREE.DoubleSide,
-      roughness: 0.65,
-      vertexColors: true,
-    });
-    for (let i = 0; i < 9; i++) {
-      const geo = bladeGeometry.clone();
-      const o = mesh(geo, m, g);
-      o.rotation.y = i * 2.399;
-      o.rotation.z = (i - 4) * 0.065;
-      o.scale.set(2.5, rand(0.7, 1.2), 2.5);
-    }
-    return g;
-  }
   function tree(parent, x, z, size = 1, pine = false, h = groundHeight) {
     const g = new THREE.Group();
     parent.add(g);
@@ -271,6 +252,7 @@ export function createWorldTools(renderer) {
       bottom = '#e8ce9e',
       sun = '#fff0bc',
       direction = [-0.8, 0.28, -1],
+      haze = 0,
     } = {},
   ) {
     const d = new THREE.Vector3(...direction).normalize();
@@ -282,10 +264,11 @@ export function createWorldTools(renderer) {
         bottom: { value: new THREE.Color(bottom) },
         sunColor: { value: new THREE.Color(sun) },
         sunDir: { value: d },
+        haze: { value: haze },
       },
       vertexShader:
         'varying vec3 vDir; void main(){vDir=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-      fragmentShader: `varying vec3 vDir; uniform vec3 top,bottom,sunColor,sunDir; void main(){vec3 d=normalize(vDir);float h=max(d.y,0.0); vec3 c=mix(bottom,top,pow(h,.55));float s=max(dot(d,sunDir),0.0);c+=sunColor*(pow(s,450.0)*2.6+pow(s,12.0)*.13);gl_FragColor=vec4(c,1.0);}`,
+      fragmentShader: `varying vec3 vDir; uniform vec3 top,bottom,sunColor,sunDir; uniform float haze; void main(){vec3 d=normalize(vDir);float h=max(d.y,0.0); vec3 c=mix(bottom,top,pow(h,.55));float s=max(dot(d,sunDir),0.0);c+=sunColor*(pow(s,450.0)*2.6+pow(s,12.0)*.13+pow(s,4.0)*haze);gl_FragColor=vec4(c,1.0);}`,
     });
     const a = mesh(new THREE.SphereGeometry(1600, 32, 20), m, scene);
     return a;
@@ -420,6 +403,7 @@ export function createWorldTools(renderer) {
   }
 
   return {
+    renderer,
     rand,
     microHeight,
     groundHeight,
@@ -430,7 +414,6 @@ export function createWorldTools(renderer) {
     addClouds,
     terrain,
     field,
-    plant,
     rock,
     rockMats,
     dummy,

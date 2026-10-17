@@ -44,6 +44,68 @@
       <p id="thought"></p>
       <small id="thought-source"></small>
     </div>
+    <div id="feeling" role="status">
+      <span id="feeling-speaker"></span>
+      <p id="feeling-text"></p>
+      <small id="feeling-source"></small>
+    </div>
+    <section id="senses" class="hidden" aria-label="草此刻的感知">
+      <div class="senses-title">此刻 · 你感觉到的</div>
+      <dl>
+        <div>
+          <dt>天气</dt>
+          <dd id="sense-weather">晴</dd>
+        </div>
+        <div>
+          <dt>阳光</dt>
+          <dd>
+            <span id="sense-warmth">24°C</span
+            ><span
+              id="meter-sun"
+              class="meter"
+              role="meter"
+              aria-label="阳光强度"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="100"
+            ></span>
+          </dd>
+        </div>
+        <div>
+          <dt>根下的水</dt>
+          <dd>
+            <span
+              id="meter-water"
+              class="meter"
+              role="meter"
+              aria-label="土壤湿度"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="45"
+            ></span>
+          </dd>
+        </div>
+        <div>
+          <dt>光合作用</dt>
+          <dd>
+            <span
+              id="meter-photo"
+              class="meter"
+              role="meter"
+              aria-label="光合作用强度"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            ></span>
+          </dd>
+        </div>
+        <div>
+          <dt>你的高度</dt>
+          <dd id="sense-height">10.0 厘米</dd>
+        </div>
+      </dl>
+      <div class="senses-hint"><kbd>F</kbd> 倾听自己此刻的感受</div>
+    </section>
     <div id="invite" class="hidden">
       <kbd>E</kbd><span>邀请这株草一起走</span>
     </div>
@@ -111,7 +173,10 @@
       <p>
         W / S 前后移动，A / D 左右移动。<br />按住鼠标左键拖动，环绕观察；滚轮调整远近。<br />按
         1—4 或点击底部，成为另一种存在。<br />草层靠近其他草，按 E
-        邀请它们同行。
+        邀请它们同行；按 F 倾听自己此刻的感受。
+      </p>
+      <p>
+        作为一株草，你会感到阳光的温度、云影、风和雨，<br />根下的水、光合作用，还有自己正在慢慢长高。
       </p>
       <p>慢下来，靠近石头、花朵或远处的星体。<br />有时，世界会回应你。</p>
       <small

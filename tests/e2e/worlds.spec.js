@@ -28,6 +28,15 @@ test('built game supports exploration, switching and session-only state without 
   await expect(page.locator('#invite')).toBeVisible();
   await page.keyboard.press('e');
   await expect(page.locator('#companion-count')).toHaveText('1');
+
+  await expect(page.locator('#senses')).toBeVisible();
+  await expect(page.locator('#sense-weather')).toHaveText('晴');
+  await expect(page.locator('#sense-height')).toHaveText(/厘米$/);
+  await page.keyboard.press('f');
+  await expect(page.locator('#feeling')).toHaveClass(/visible/);
+  await expect(page.locator('#feeling-speaker')).toHaveText(/^你/);
+  await expect(page.locator('#feeling-text')).not.toHaveText('');
+  await expect(page.locator('#feeling-source')).toHaveText(/原创|启发/);
   const canvas = page.locator('#world');
   await expect(canvas).toHaveAttribute('data-position', /,/);
   const before = await canvas.getAttribute('data-position');
@@ -63,6 +72,11 @@ test('built game supports exploration, switching and session-only state without 
     await expect(
       page.locator(`button[data-world="${Number(key) - 1}"]`),
     ).toHaveAttribute('aria-pressed', 'true');
+    if (key === '1') await expect(page.locator('#senses')).toBeVisible();
+    else {
+      await expect(page.locator('#senses')).toBeHidden();
+      await expect(page.locator('#feeling')).not.toHaveClass(/visible/);
+    }
   }
   await expect(page.locator('#companion-count')).toHaveText('1');
   await page.locator('#help').click();
