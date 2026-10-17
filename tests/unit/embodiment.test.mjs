@@ -94,3 +94,24 @@ test('pre-registered wildlife keeps its identity when player control is prepared
   world.position.x += 10;
   assert.equal(bird.object.position.x, 10);
 });
+
+test('ambient talkers need an explicit profile before they can be inhabited', () => {
+  const ambient = new THREE.Group();
+  const flower = new THREE.Group();
+  const world = {
+    index: 0,
+    avatar: new THREE.Group(),
+    talkers: [
+      { object: ambient, name: '昆虫' },
+      { object: flower, name: '雏菊', embodiment: { kind: 'flower' } },
+    ],
+    recruitables: [],
+    followers: [],
+  };
+  prepareEntities(world, () => 0);
+  assert(!world.entities.some((entity) => entity.object === ambient));
+  const target = world.entities.find((entity) => entity.object === flower);
+  assert(target);
+  assert.equal(inhabit(world, target), true);
+  assert.equal(world.avatar, flower);
+});

@@ -40,6 +40,15 @@ test('built game supports exploration, switching and session-only state without 
   await expect(page.locator('#invite')).toBeVisible();
   await page.keyboard.press('e');
   await expect(page.locator('#companion-count')).toHaveText('1');
+
+  await expect(page.locator('#senses')).toBeVisible();
+  await expect(page.locator('#sense-weather')).toHaveText('晴');
+  await expect(page.locator('#sense-height')).toHaveText(/厘米$/);
+  await page.keyboard.press('f');
+  await expect(page.locator('#feeling')).toHaveClass(/visible/);
+  await expect(page.locator('#feeling-speaker')).toHaveText(/^你/);
+  await expect(page.locator('#feeling-text')).not.toHaveText('');
+  await expect(page.locator('#feeling-source')).toHaveText(/原创|启发/);
   const canvas = page.locator('#world');
   await expect(canvas).toHaveAttribute('data-position', /,/);
   const before = await canvas.getAttribute('data-position');
@@ -64,12 +73,20 @@ test('built game supports exploration, switching and session-only state without 
     ['1', '一株草'],
   ]) {
     await page.keyboard.press(key);
-    await advanceGame(page, 650);
+    // Input is locked during the 480 ms fade-out and 70 ms fade-in. Complete
+    // those two timer stages while rendering each scene without extra ticks.
+    await page.clock.fastForward(500);
+    await page.clock.fastForward(150);
     await expect(page.locator('#world-name')).toHaveText(name);
     await expect(page.locator('#veil')).not.toHaveClass(/covered/);
     await expect(
       page.locator(`button[data-world="${Number(key) - 1}"]`),
     ).toHaveAttribute('aria-pressed', 'true');
+    if (key === '1') await expect(page.locator('#senses')).toBeVisible();
+    else {
+      await expect(page.locator('#senses')).toBeHidden();
+      await expect(page.locator('#feeling')).not.toHaveClass(/visible/);
+    }
   }
   await expect(page.locator('#companion-count')).toHaveText('1');
   await page.locator('#help').click();
@@ -113,7 +130,7 @@ test('looking toward the sun offers a ripple and R enters the actual solar body'
   // Orbit using the real pointer, then look up from the grass toward the sun.
   await page.mouse.move(480, 320);
   await page.mouse.down();
-  await page.mouse.move(389, 180, { steps: 10 });
+  await page.mouse.move(434, 220, { steps: 10 });
   await page.mouse.up();
   await advanceGame(page, 1500);
   await expect(page.locator('#world')).toHaveAttribute(

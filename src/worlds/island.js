@@ -520,7 +520,7 @@ export function makeIsland(tools) {
   const sunWarm = new THREE.Color('#ffe2a4'),
     sunCool = new THREE.Color('#c9dce9');
   let weatherTime = 0;
-  w.update = (time, dt, reduced) => {
+  w.update = (dt, time, reduced) => {
     weatherTime += dt;
     const storm = reduced
       ? 0

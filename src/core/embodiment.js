@@ -23,6 +23,7 @@ export function prepareEntities(world, ground) {
   });
   world.entities.unshift(world.original);
   for (const talker of world.talkers) {
+    if (!talker.embodiment) continue;
     if (world.entities.some((entry) => entry.object === talker.object))
       continue;
     world.entities.push(make(talker.object, talker.name, talker.embodiment));
