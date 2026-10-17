@@ -7,8 +7,10 @@ import {
 } from '../core/grass-environment.js';
 import { createFauna } from './micro-fauna.js';
 import { createFlora } from './micro-flora.js';
+import { createTrees } from './micro-trees.js';
 
 const TAU = Math.PI * 2;
+const FOG_DENSITY = 0.0135;
 // A low sun ahead of the starting camera, so the meadow is lit from behind as
 // in the golden-hour reference and blades glow where light passes through.
 // The visible disc sits nearer the horizon than the light, keeping it in frame
@@ -31,6 +33,18 @@ const WHITE = new THREE.Color('#ffffff');
 const WET_SOIL = new THREE.Color('#8a7f78');
 const GREY_HILLS = new THREE.Color('#c4c6c8');
 
+// Software WebGL (no GPU acceleration) cannot draw the full meadow at a usable
+// rate, so it gets a sparser one without shadows or dew refraction.
+function rendersInSoftware(renderer) {
+  const gl = renderer.getContext();
+  let name = String(gl.getParameter(gl.RENDERER));
+  const info = /webkit|mozilla/i.test(name)
+    ? gl.getExtension('WEBGL_debug_renderer_info')
+    : null;
+  if (info) name = String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL));
+  return /swiftshader|llvmpipe|softpipe|software|basic render/i.test(name);
+}
+
 export function makeMicro(tools) {
   const {
     newWorld,
@@ -44,7 +58,8 @@ export function makeMicro(tools) {
     particles,
     windUniform,
   } = tools;
-  const flora = createFlora(tools);
+  const lite = rendersInSoftware(tools.renderer);
+  const flora = createFlora({ ...tools, detail: lite ? 0.15 : 1 });
 
   // Distant blue ridges that stay visible through the meadow haze.
   function hills(scene) {
@@ -214,10 +229,11 @@ void main() {
       bottom: -16,
     });
     sunlight.shadow.camera.updateProjectionMatrix();
+    sunlight.castShadow = !lite;
     const hemisphere = scene.children.find((child) => child.isHemisphereLight);
     hemisphere.color.set('#d4e2ef');
     hemisphere.groundColor.set('#5b4532');
-    scene.fog = new THREE.FogExp2(CLEAR_FOG.getHex(), 0.017);
+    scene.fog = new THREE.FogExp2(CLEAR_FOG.getHex(), FOG_DENSITY);
     flora.swayUniforms.uSunDir.value.copy(SKY_SUN_DIRECTION);
     addClouds(scene);
     const hillMaterials = hills(scene);
@@ -287,6 +303,7 @@ void main() {
 
     const fauna = createFauna({ ...tools, ...flora }, scene);
     world.talkers.push(...fauna.talkers);
+    world.talkers.push(...createTrees({ ...tools, ...flora }, scene).talkers);
 
     // A tall blade leaning into the starting view, with a large drop at its tip.
     const heroBlade = flora.hero(
@@ -314,10 +331,9 @@ void main() {
       0.985 * 0.985 * heroRecord.curve + 0.012,
     ).applyMatrix4(heroRecord.matrix);
     heroDropPosition.y -= 0.085;
-    const refraction = flora.captureRefraction(
-      scene,
-      new THREE.Vector3(0.8, 0.8, 1.6),
-    );
+    const refraction = lite
+      ? null
+      : flora.captureRefraction(scene, new THREE.Vector3(0.8, 0.8, 1.6));
     flora.buildDew(scene, blades, refraction, [
       {
         blade: heroRecord,
@@ -343,7 +359,7 @@ void main() {
       ],
     });
 
-    const sparkles = flora.sparkleField(700, 16);
+    const sparkles = flora.sparkleField(2600, 48);
     scene.add(sparkles);
     const rain = rainStreaks();
     scene.add(rain);
@@ -374,7 +390,7 @@ void main() {
         .copy(SUN_DISC)
         .multiplyScalar(0.2 + 0.8 * state.sun);
       scene.fog.color.copy(CLEAR_FOG).lerp(GREY_FOG, overcast);
-      scene.fog.density = 0.017 + state.rain * 0.01;
+      scene.fog.density = FOG_DENSITY + state.rain * 0.01;
       for (const material of hillMaterials)
         material.color.copy(WHITE).lerp(GREY_HILLS, overcast * 0.7);
       soil.color.copy(WHITE).lerp(WET_SOIL, wetness);
@@ -396,7 +412,13 @@ void main() {
       sunlight.position.copy(SUN_DIRECTION).multiplyScalar(90).add(avatarPoint);
       sunlight.target.position.copy(avatarPoint);
       rain.position.copy(avatarPoint);
-      fauna.update(time, dt, { wetness, reduced });
+      flora.cull(avatarPoint.x, avatarPoint.z);
+      fauna.update(time, dt, {
+        wetness,
+        reduced,
+        playerX: avatarPoint.x,
+        playerZ: avatarPoint.z,
+      });
     };
     return world;
   }
