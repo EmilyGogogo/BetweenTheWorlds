@@ -1,5 +1,6 @@
 import * as THREE from '../../vendor/three.module.js';
 import { rng } from '../core/random.js';
+import { attachMoonCompanion } from './earth-moon.js';
 
 export function makeSpace(tools) {
   const { newWorld, mesh, mat, rand } = tools;
@@ -162,6 +163,7 @@ export function makeSpace(tools) {
       name: '月亮',
       lines: [['你以为你在独行。我的潮汐，却一直跟着你。', '原创 · 万物之间']],
     });
+    attachMoonCompanion(w, moon);
     // Sparse luminous dust supplies depth without flattening the navigable sky into a picture.
     const hazeGeo = new THREE.BufferGeometry(),
       hp = [];

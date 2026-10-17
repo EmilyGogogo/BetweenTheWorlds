@@ -1,6 +1,12 @@
 import * as THREE from '../vendor/three.module.js';
 import { descriptions } from './content/worlds.js';
 import { createWorldFactory } from './worlds/index.js';
+import {
+  updateActionContext,
+  performPrimaryAction,
+  primaryActionLabel,
+  renderPrimaryAction,
+} from './core/world-actions.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('world');
@@ -50,6 +56,12 @@ let lastTalk = -30,
   talkUntil = -1,
   toastUntil = 0;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const actionContext = {
+  dt: 0,
+  canInteract: false,
+  canSimulate: false,
+  reducedMotion: reduced,
+};
 const { builders, rand, microHeight, groundHeight, windUniform } =
   createWorldFactory(renderer);
 
@@ -148,6 +160,7 @@ function say(talker) {
   talkUntil = time + 8.5;
 }
 function recruit() {
+  refreshPrimaryAction();
   const w = getWorld(0);
   if (active !== 0 || !nearGrass || !started || switching) return;
   if (w.followers.length >= 12) {
@@ -163,6 +176,7 @@ function recruit() {
       : `${w.followers.length} 株草，与你一起经过世界。`,
   );
   nearGrass = null;
+  refreshPrimaryAction();
 }
 function encounter() {
   if (!started || switching) return;
@@ -175,8 +189,21 @@ function encounter() {
     if (candidates.length)
       say(candidates[Math.floor(rand(0, candidates.length))]);
   }
+}
+function refreshActionContext(dt = 0) {
+  updateActionContext(
+    actionContext,
+    started,
+    switching,
+    !$('help-panel').classList.contains('hidden'),
+    dt,
+  );
+}
+function refreshPrimaryAction() {
+  refreshActionContext();
+  const w = getWorld(active);
   nearGrass = null;
-  if (active === 0 && w.followers.length < 12) {
+  if (actionContext.canInteract && active === 0 && w.followers.length < 12) {
     let closest = 3;
     for (const p of w.recruitables) {
       if (p.joined) continue;
@@ -187,7 +214,11 @@ function encounter() {
       }
     }
   }
-  $('invite').classList.toggle('hidden', !nearGrass);
+  renderPrimaryAction(
+    $('invite'),
+    $('invite-label'),
+    primaryActionLabel(active, w, actionContext, nearGrass),
+  );
 }
 
 let audio = null;
@@ -280,10 +311,12 @@ $('sound').onclick = toggleAudio;
 $('help').onclick = () => {
   keys.clear();
   $('help-panel').classList.remove('hidden');
+  refreshPrimaryAction();
   $('close-help').focus();
 };
 function closeHelp() {
   $('help-panel').classList.add('hidden');
+  refreshPrimaryAction();
   $('help').focus();
 }
 $('close-help').onclick = closeHelp;
@@ -310,7 +343,18 @@ addEventListener('keydown', (e) => {
   keys.add(e.code);
   if (e.code.startsWith('Digit') && +e.key >= 1 && +e.key <= 4)
     switchWorld(+e.key - 1);
-  if (e.code === 'KeyE' && !e.repeat) recruit();
+  if (e.code === 'KeyE') {
+    refreshActionContext();
+    const feedback = performPrimaryAction({
+      active,
+      world: getWorld(active),
+      context: actionContext,
+      repeat: e.repeat,
+      recruit,
+    });
+    if (feedback) toast(feedback);
+    refreshPrimaryAction();
+  }
 });
 addEventListener('keyup', (e) => keys.delete(e.code));
 addEventListener('blur', () => {
@@ -383,6 +427,8 @@ function animate() {
       w.avatar.rotation.y += delta * 0.14;
     }
   }
+  refreshActionContext(dt);
+  w.update?.(actionContext);
   if (active === 0) {
     w.avatar.rotation.z =
       Math.sin(time * 1.6) * 0.035 + (moving ? Math.sin(time * 8) * 0.04 : 0);
@@ -422,6 +468,7 @@ function animate() {
   if (active === 3) w.globe.rotation.y += dt * 0.018;
   if (w.particles && !reduced) w.particles.rotation.y = time * 0.003;
   placeCamera();
+  refreshPrimaryAction();
   if (frame % 12 === 0) encounter();
   if (time > talkUntil) $('encounter').classList.remove('visible');
   if (time > toastUntil) $('toast').classList.remove('visible');

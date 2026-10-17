@@ -10,12 +10,14 @@ src/main.js                会话状态、输入、切换、镜头、对白触�
 src/styles.css             现有界面样式与响应式布局
 src/content/worlds.js      四层名称、尺度、镜头与移动参数
 src/core/random.js         可复现的随机数生成器
+src/core/world-actions.js  主动作分派、共享允许条件与提示 DOM 适配
 src/worlds/index.js        场景工厂装配
 src/worlds/shared.js       地形、植被、光照、天空与共用渲染工具
 src/worlds/micro.js        草层
 src/worlds/human.js        人层
 src/worlds/island.js       岛屿层
 src/worlds/space.js        星球层
+src/worlds/earth-moon.js   现有月亮的邀请、两态和局部轨道
 vendor/                    保持原件的引擎与第三方许可
 prototypes/                原始附件及 SHA-256 清单
 scripts/                   受限静态服务与发布复制脚本
@@ -31,6 +33,18 @@ docs/                      方向、任务、验证、维护与决策
 场景状态包含 `scene`、`position`、`avatar`、`talkers`、`followers`、`recruitables`。对白实体包含 `object`、`range`、`name`、`lines`，每条 `lines` 记录正文与来源说明。层特有数据由所属模块创建，主循环只更新实际需要的部分。
 
 共享工具作为参数注入四层，避免场景直接依赖主控制器。地面高度函数同时用于地形、角色和镜头，修改时三者需要一起验证。
+
+## Earth V1 的可选动作与更新契约
+
+`main.js` 为唯一控制器，复用一个 context 对象：`dt` 是已限制到最多 0.05 秒的本帧游戏时间，`canInteract` / `canSimulate` 都要求已进入游戏、帮助关闭、未转场；`reducedMotion` 是启动时的系统偏好。只对活动世界调用可选 `update(context)`，顺序为移动及边界夹取 → 世界更新 → 现有动画与镜头 → 提示及原相遇检测 → 渲染。非活动世界不更新；没有回调的世界保持原行为。
+
+可选 `getPrimaryAction(context)` 返回只读 `{label}` 或 null，无副作用；可选 `onPrimaryAction(context)` 重新检查当前资格，成功返回反馈文本，否则 null。E 过滤重复按键，草仍走 recruit；其他世界动作被拒绝时不回退到草。提示每帧查询、仅变化时写 DOM，帮助和切换时立即隐藏；不再由低频 encounter 更新覆盖。
+
+Earth 保存 `moon`（原 Mesh 引用）、`earthState.moon = {status, phase, invitable}`。`invitable` 是局部动作资格标志，不是概率配置。Moon 不存在、被移出 scene 或不可邀请时不显示/执行邀请，不生成替代天体。状态 available → orbiting，不可解散；距离按中心三维 `<=75`，不要求随机对白先发生。
+
+入轨复用原 Moon，零水平朝向显式选 +X；水平半径 48、高度 5、角速度 0.18rad/游戏秒，中心取最新 `w.position`。帮助/转场/非活动冻结相位；减弱动态时固定相对偏移随行；刷新新建世界重置关系。Moon 保持 scene 子节点，避免继承 globe 自转。月亮与有环星球继续使用原 talkers 与共享 19 秒冷却。
+
+新增代码不创建 GPU/音频资源、监听、RAF 或网络请求；继续沿用场景缓存寿命。新增 Node 测试覆盖逻辑、真实 Three.js 对象装配及动作/提示接口；测试里的纹理绘制 stub 不代表画面验收。实际键鼠、构图与声音由用户按检查单验证。本轮明确跳过浏览器自动化，现有 E2E 与 CI 保留。
 
 ## 当前限制
 

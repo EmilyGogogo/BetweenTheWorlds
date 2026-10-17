@@ -57,11 +57,11 @@ test('built game supports exploration, switching and session-only state without 
   await expect(page.locator('#encounter')).toHaveClass(/visible/);
   await expect(page.locator('#thought')).not.toHaveText('');
 
-  for (const [key, name] of [
-    ['2', '一个人'],
-    ['3', '一座岛屿'],
-    ['4', '一颗星球'],
-    ['1', '一株草'],
+  for (const [key, name, speed] of [
+    ['2', '一个人', 7],
+    ['3', '一座岛屿', 15],
+    ['4', '一颗星球', 38],
+    ['1', '一株草', 1.65],
   ]) {
     await page.keyboard.press(key);
     // Input is locked during the 480 ms fade-out and 70 ms fade-in. Complete
@@ -73,6 +73,47 @@ test('built game supports exploration, switching and session-only state without 
     await expect(
       page.locator(`button[data-world="${Number(key) - 1}"]`),
     ).toHaveAttribute('aria-pressed', 'true');
+
+    // Flush the 30-frame diagnostic sampler before reading each real position.
+    // Measure input-driven displacement, rather than merely checking constants.
+    await advanceGame(page, 1500);
+    const origin = (await canvas.getAttribute('data-position'))
+      .split(',')
+      .map(Number);
+    await page.keyboard.down('w');
+    if (key === '4') await page.keyboard.down('d');
+    try {
+      await advanceGame(page, 1000);
+    } finally {
+      await page.keyboard.up('w');
+      if (key === '4') await page.keyboard.up('d');
+    }
+    await advanceGame(page, 1500);
+    const stoppedPosition = await canvas.getAttribute('data-position');
+    const position = stoppedPosition.split(',').map(Number);
+    const distance = Math.hypot(
+      position[0] - origin[0],
+      position[1] - origin[1],
+    );
+    // A fixed game second must retain the old speeds outside Earth. Earth's
+    // diagonal must also be normalized, rather than gaining sqrt(2) speed.
+    expect(distance, `${name} distance per game second`).toBeCloseTo(speed, 1);
+    await advanceGame(page, 1500);
+    expect(await canvas.getAttribute('data-position')).toBe(stoppedPosition);
+
+    if (key === '4') {
+      await page.keyboard.down('w');
+      try {
+        await advanceGame(page, 7000);
+      } finally {
+        await page.keyboard.up('w');
+      }
+      await advanceGame(page, 1500);
+      const boundary = (await canvas.getAttribute('data-position'))
+        .split(',')
+        .map(Number);
+      expect(Math.hypot(...boundary)).toBeCloseTo(200, 1);
+    }
   }
   await expect(page.locator('#companion-count')).toHaveText('1');
   await page.locator('#help').click();
