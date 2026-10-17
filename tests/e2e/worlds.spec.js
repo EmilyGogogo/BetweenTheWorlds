@@ -64,7 +64,10 @@ test('built game supports exploration, switching and session-only state without 
     ['1', '一株草'],
   ]) {
     await page.keyboard.press(key);
-    await advanceGame(page, 650);
+    // Input is locked during the 480 ms fade-out and 70 ms fade-in. Complete
+    // those two timer stages while rendering each scene without extra ticks.
+    await page.clock.fastForward(500);
+    await page.clock.fastForward(150);
     await expect(page.locator('#world-name')).toHaveText(name);
     await expect(page.locator('#veil')).not.toHaveClass(/covered/);
     await expect(

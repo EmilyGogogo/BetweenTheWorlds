@@ -12,6 +12,8 @@ export default defineConfig({
     browserName: 'chromium',
     baseURL: 'http://127.0.0.1:4173',
     viewport: { width: 960, height: 640 },
+    // Keep the UI viewport while reducing software WebGL rasterization cost.
+    deviceScaleFactor: 0.5,
     launchOptions: {
       args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
     },
