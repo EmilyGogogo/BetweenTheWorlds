@@ -39,6 +39,9 @@ button:disabled {
   display: block;
   touch-action: none;
 }
+#world:focus {
+  outline: none;
+}
 .grain {
   pointer-events: none;
   position: fixed;
@@ -334,6 +337,123 @@ kbd {
   font-size: 9px;
   color: #ddd5c2a0;
   letter-spacing: 2px;
+}
+#feeling {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  max-width: 270px;
+  padding: 12px 16px 11px;
+  background: #182b23b8;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s;
+}
+#feeling::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 10px;
+  height: 10px;
+  background: #182b23;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  transform: translateX(-50%) rotate(45deg);
+}
+#feeling.visible {
+  opacity: 1;
+}
+#feeling.offscreen {
+  opacity: 0;
+}
+#feeling-speaker {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: #e9d299;
+}
+#feeling-text {
+  font-family: 'Noto Serif SC', 'Songti SC', serif;
+  font-size: 14px;
+  line-height: 1.8;
+  letter-spacing: 1.5px;
+  margin: 6px 0 4px;
+}
+#feeling-source {
+  font-size: 8px;
+  color: #ddd5c2a0;
+  letter-spacing: 1px;
+}
+#senses {
+  position: fixed;
+  right: 40px;
+  top: 128px;
+  width: 172px;
+  z-index: 3;
+  padding: 12px 14px;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--dim);
+  background: #182b2380;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  backdrop-filter: blur(12px);
+}
+.senses-title {
+  font-size: 8px;
+  letter-spacing: 3px;
+  margin-bottom: 9px;
+}
+#senses dl {
+  margin: 0;
+  display: grid;
+  gap: 7px;
+}
+#senses dl div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+#senses dd {
+  margin: 0;
+  color: var(--cream);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.meter {
+  display: inline-block;
+  width: 56px;
+  height: 3px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #eee6cb26;
+}
+.meter::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: var(--level, 0%);
+  background: #e7cf96;
+  transition: width 1s;
+}
+#meter-water::after {
+  background: #9cc4dc;
+}
+#meter-photo::after {
+  background: #b9d77a;
+}
+.senses-hint {
+  margin-top: 10px;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 #invite {
   position: fixed;
@@ -829,6 +949,10 @@ body.choosing-character #toast {
     bottom: 200px;
     width: min(330px, 60vw);
   }
+  #senses {
+    right: 24px;
+    width: 150px;
+  }
 }
 @media (max-height: 650px) {
   .world-label {
@@ -864,10 +988,82 @@ body.choosing-character #toast {
   #naturalist {
     top: 72px;
   }
+  #senses {
+    top: 112px;
+    padding: 9px 12px;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   * {
     scroll-behavior: auto !important;
     transition: none !important;
+  }
+}
+
+/* A single, wordless cue belongs to the nearby body, not to the HUD. */
+#soul-ripple {
+  position: fixed;
+  z-index: 4;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #fff5d9;
+  opacity: 0.85;
+}
+#soul-ripple::before,
+#soul-ripple::after {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #f5eadb30;
+  animation: soul-ripple 3.2s ease-out infinite;
+  pointer-events: none;
+}
+#soul-ripple::after {
+  animation-delay: -1.6s;
+}
+@keyframes soul-ripple {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.65;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+.soul-shift .grain {
+  animation: soul-breath 800ms ease-out;
+}
+@keyframes soul-breath {
+  0% {
+    background-color: #f2ead51a;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #soul-ripple::before,
+  #soul-ripple::after {
+    animation: none;
+    box-shadow: none;
+    opacity: 0.6;
+  }
+  #soul-ripple::after {
+    inset: 4px;
+    opacity: 0.25;
+  }
+  .soul-shift .grain {
+    animation: none;
   }
 }

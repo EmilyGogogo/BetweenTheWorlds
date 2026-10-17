@@ -2,7 +2,13 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests/e2e',
-  timeout: 240_000,
+  // The smoke test walks the whole grass scene through software WebGL, so its
+  // wall-clock cost tracks CPU rasterization speed rather than game logic. A
+  // local run with swiftshader forced takes about 190 s; CI runners have fewer
+  // cores, so they need a wider budget than a developer machine. Widen the
+  // budget instead of trimming the walkthrough: every assertion still has to
+  // pass, only the time allowed to reach them changes.
+  timeout: process.env.CI ? 600_000 : 240_000,
   expect: { timeout: 30_000 },
   workers: 1,
   forbidOnly: !!process.env.CI,
@@ -10,6 +16,7 @@ export default defineConfig({
   reporter: 'list',
   use: {
     browserName: 'chromium',
+    channel: process.env.PLAYWRIGHT_CHANNEL || undefined,
     baseURL: 'http://127.0.0.1:4173',
     viewport: { width: 960, height: 640 },
     // Keep the UI viewport while reducing software WebGL rasterization cost.

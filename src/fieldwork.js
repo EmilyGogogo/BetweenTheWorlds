@@ -191,7 +191,7 @@ export function createFieldwork({
 
   function select(index) {
     const w = getWorld(),
-      previous = w.avatar,
+      previous = w.original.object,
       next = w.cast[index].body;
     setAbility(false);
     w.cast[state.index].hands.visible = false;
@@ -201,7 +201,9 @@ export function createFieldwork({
       next.rotation.y = previous.rotation.y;
       w.scene.remove(previous);
       w.scene.add(next);
+      w.original.object = next;
       w.avatar = next;
+      w.position = next.position;
     }
     state.lureUntil = state.trailUntil = state.cooldownUntil = -1;
     state.nextSneeze = state.time + 30 + random() * 40;
@@ -629,12 +631,14 @@ export function createFieldwork({
               limit,
             );
 
-    const hand = state.view === 'first' && !state.panel ? handPoint : null;
+    const hand =
+      visible && state.view === 'first' && !state.panel ? handPoint : null;
     for (const a of w.animals) {
       a.view.hand = hand;
       w.fauna.pose(a.sim, a.view, time, dt);
     }
     w.animate(time);
+    if (!visible) return;
     w.setTrailGlow(
       time < state.trailUntil ? Math.min(1, state.trailUntil - time) : 0,
     );
@@ -719,6 +723,8 @@ export function createFieldwork({
       setAbility(false);
       setTarget(null, null);
       visible = false;
+      for (const { hands } of getWorld().cast) hands.visible = false;
+      getWorld().original.object.visible = true;
       $('field-note').classList.remove('visible');
     },
     isBlocking: () => state.panel,

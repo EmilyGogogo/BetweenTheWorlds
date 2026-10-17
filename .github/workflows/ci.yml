@@ -47,7 +47,10 @@ jobs:
   browser:
     name: Browser smoke
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # Must stay above the Playwright CI test budget in playwright.config.js
+    # plus install and build time, otherwise the job is killed before the test
+    # can report its own failure.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
