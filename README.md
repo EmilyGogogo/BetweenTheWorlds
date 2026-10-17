@@ -6,16 +6,52 @@
 
 ## 先试玩
 
-无需安装：下载整个仓库后，用支持 WebGL 2 的桌面浏览器打开 [离线 Demo](prototypes/offline-demo.html)。原始附件完整保留；它是历史参考，后续开发以根目录的 `index.html` 和 `src/` 为准。
+两种方式都需要支持 WebGL 2 的桌面浏览器。
 
-开发版使用 Node.js 22（至少 22.13，建议使用 22.x 最新补丁）和 npm：
+### 直接打开离线 Demo（无需安装工具）
+
+先下载整个仓库并解压，再打开其中的 [离线 Demo](prototypes/offline-demo.html)：
+
+- **Windows**：在资源管理器中进入 `prototypes` 文件夹，右键 `offline-demo.html`，选择「打开方式」，使用浏览器打开。
+- **Linux 桌面**：在文件管理器中进入 `prototypes` 文件夹，右键 `offline-demo.html`，选择用浏览器打开。
+
+这个文件是完整保留的历史参考，后续开发以根目录的 `index.html` 和 `src/` 为准。要体验当前开发版，请按下面的方式启动本地服务。
+
+### Windows 打开当前开发版
+
+1. 安装 Node.js 22（至少 22.13，低于 23，包含 npm），安装后重新打开 PowerShell。
+2. 下载并解压仓库，或使用 Git 克隆仓库。进入包含 `package.json` 的项目根目录，执行以下命令；示例路径请替换成实际路径：
+
+```powershell
+cd "D:\GitHub\BetweenTheWorlds"
+npm.cmd ci
+npm.cmd run dev
+```
+
+这里使用 `npm.cmd`，可避免 PowerShell 的脚本执行策略阻止 `npm.ps1`。
+
+3. 保持 PowerShell 窗口开启，在浏览器地址栏输入 `http://127.0.0.1:5173`，点击「进入万物之间」。
+
+### Linux 打开当前开发版
+
+1. 安装 Node.js 22（至少 22.13，低于 23）和 npm，确认终端中的 `node --version` 与 `npm --version` 可用且版本符合要求。
+2. 下载并解压仓库，或使用 Git 克隆仓库。打开终端，进入包含 `package.json` 的项目根目录，执行以下命令；示例路径请替换成实际路径：
 
 ```sh
+cd ~/BetweenTheWorlds
 npm ci
 npm run dev
 ```
 
-访问终端显示的 `http://127.0.0.1:5173`。首次安装工具需要网络；游戏运行时无需登录、后端或网络资源。
+3. 保持终端开启，在桌面浏览器地址栏输入 `http://127.0.0.1:5173`，点击「进入万物之间」。
+
+### 启动与退出说明
+
+- 当前开发版需要通过本地服务访问，直接双击根目录的 `index.html` 无法正常加载模块。
+- 首次安装工具和执行 `npm ci` 需要网络；安装完成后，游戏运行时无需登录、后端或网络资源。
+- 下次打开时，进入同一项目目录，只需执行 `npm.cmd run dev`（Windows）或 `npm run dev`（Linux）；依赖变化后再执行 `npm ci`。
+- 结束试玩后，在运行服务的终端按 `Ctrl+C` 停止服务。
+- 如果提示端口被占用（`EADDRINUSE`），可改用 `npm.cmd run dev -- --port=5174`（Windows）或 `npm run dev -- --port=5174`（Linux），再访问 `http://127.0.0.1:5174`。
 
 W/A/S/D 移动，鼠标左键拖动观察，滚轮缩放；1—4 或底部按钮切换尺度；草层靠近同类按 E 邀请同行，最多 12 株。右上角控制声音与查看帮助。
 
