@@ -87,3 +87,11 @@ V3沿用四天体/三talkers库存，保存原ringedPlanet/gas/ring引用与原�
 每个尺度的视觉与实体改动优先限定在对应文件。改动 `main.js`、`shared.js`、层索引、工具参数、根规范或 CI 时，在关联任务中先说明影响。对白暂在各场景内，独立内容结构与音频模块是后续任务，不能假定已经存在。
 
 新增事件监听必须有明确生命周期；新增 GPU/音频资源说明复用与释放策略。性能测量记录设备、浏览器、操作路径与测量方法，不用主观“流畅”代替证据。
+
+## Earth视觉资源与更新
+
+视觉初始化位于space，程序纹理集中于earth-materials，背景/32个世界坐标InstancedMesh岩体位于earth-background。Earth原Mesh/大气、Moon、Sun Group的两子节点、原gas/ring均保留角色与动作引用；只在动作处理器捕获baseline之前设置最终材质。背景sky复用现有camera平移入口，4200星点替代两套旧Points，方向不随相机旋转。装饰不进入talkers。
+
+installEarthActions的第五参数为可选`{visualUpdate}`；旧三/四参调用保持。唯一世界update按Ringed→Moon→Sun→visualUpdate调用；Earth原0.018自转从main迁入earth-visuals，云0.020独立自转，合法dt<=0.05、canSimulate且非reducedMotion才推进。视觉不覆盖Sun大气/halo或V3 ring opacity。9张一次性CanvasTexture约9.67MiB（RGBA8+mip估算）；数据图NoColorSpace，颜色sRGB；Earth的R高度/G粗糙度复用一张图。无GPU释放新协议，仍随缓存scene存活。
+
+新增美术固定局部种子，移除旧背景的共享rand消耗会改变之后随机流位置；没有修改相遇算法/19秒冷却，也没有外部概率接口。开发手验采样服务仅在手动运行scripts/earth-visual-qa.mjs时，以内存响应插入同一RAF时间戳/renderer统计；不更改发布main、不模拟按键、不上传数据、不改生产白名单。契约见[ADR0005](decisions/0005-earth-visual-resources.md)。

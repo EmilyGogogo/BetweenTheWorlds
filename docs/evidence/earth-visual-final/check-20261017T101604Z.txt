@@ -1,0 +1,61 @@
+Earth visual implementation final check
+UTC start: 2026-10-17T10:16:04.628271+00:00
+$ git rev-parse HEAD
+c97b8bbf34ab7490819710ec7972582b7cf9f77e
+EXIT 0
+$ node --version
+v22.13.0
+EXIT 0
+$ npm --version
+10.9.2
+EXIT 0
+$ git status --short
+ M README.md
+ M docs/architecture.md
+ M docs/earth-high-level-plan.md
+ M docs/testing.md
+ M src/main.js
+ M src/styles.css
+ M src/worlds/earth-actions.js
+ M src/worlds/space.js
+ M tests/helpers/earth-fixture.mjs
+?? docs/assets/
+?? docs/decisions/0005-earth-visual-resources.md
+?? docs/earth-v4-plan.md
+?? docs/earth-visual-implementation-plan.md
+?? docs/earth-visual-improvement-proposal.md
+?? docs/earth-visual-manual-qa.md
+?? docs/earth-visual-qa-results.md
+?? docs/earth-visual-step0-evidence.md
+?? docs/evidence/
+?? scripts/earth-visual-qa.mjs
+?? scripts/earth-visual-qa/
+?? src/worlds/earth-background.js
+?? src/worlds/earth-materials.js
+?? src/worlds/earth-visuals.js
+?? tests/unit/earth-visual-qa.test.mjs
+?? tests/unit/earth-visuals.test.mjs
+EXIT 0
+$ npm run check
+
+> between-the-worlds@0.1.0 check
+> npm run format:check && npm run lint && npm test && npm run build
+
+
+> between-the-worlds@0.1.0 format:check
+> prettier . --check
+
+Checking formatting...
+All matched files use Prettier code style!
+
+> between-the-worlds@0.1.0 lint
+> eslint . --max-warnings=0
+
+
+/Users/naughtyrex/claude-test/1017hackathon/BetweenTheWorlds/scripts/earth-visual-qa/collector.mjs
+  1:21  error  'navigator' is already defined as a built-in global variable  no-redeclare
+
+✖ 1 problem (1 error, 0 warnings)
+
+EXIT 1
+UTC end: 2026-10-17T10:16:06.711479+00:00

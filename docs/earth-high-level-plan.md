@@ -1,5 +1,7 @@
 # Earth 高层玩法与迭代计划
 
+独立于玩法版本的 [视觉提升提案](earth-visual-improvement-proposal.md) 与概念图已保存；星空/银河、独立云层、四天体程序材质与少量合批岩体已实现，非浏览器QA为74/74。画面、控制与性能仍待用户，见[视觉QA](earth-visual-qa-results.md)。不新增相遇概率或重复天体。
+
 当前进度：V1 代码、非浏览器QA和用户浏览器验收均已通过，见 [QA 记录](earth-v1-qa-results.md)。以下“已有/尚未实现”表是 `d8b32d0` 的规划基线；当前 Moon 已具备邀请与轨道回调，不能据基线表判断最新源码。
 
 V1 手验已获用户确认。V2 的太阳、光照与主动响应已实现至代码与非浏览器 QA，见 [V2 QA记录](earth-v2-qa-results.md)；新增浏览器体验S1–S7也已由用户确认通过。V3代码与非浏览器QA也已完成，用户T1–T7待验，见 [V3 QA记录](earth-v3-qa-results.md)。

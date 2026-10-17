@@ -1,5 +1,11 @@
 // Earth-local arbitration; the shared label/null and feedback/null API stays intact.
-export function installEarthActions(world, moon, sun, ringedPlanet = null) {
+export function installEarthActions(
+  world,
+  moon,
+  sun,
+  ringedPlanet = null,
+  { visualUpdate = null } = {},
+) {
   function select(context) {
     if (!context.canInteract) return null;
     if (moon.getPrimaryAction(context)) return moon;
@@ -17,6 +23,7 @@ export function installEarthActions(world, moon, sun, ringedPlanet = null) {
     ringedPlanet?.update(context);
     moon.update(context);
     sun.update(context);
+    visualUpdate?.(context);
   };
   if (ringedPlanet)
     world.getMovementInfluence = (context, out) =>

@@ -461,7 +461,6 @@ function animate() {
     w.avatar.rotation.y += dt * 0.008;
     w.avatar.rotation.z = reduced ? 0 : Math.sin(time * 0.24) * 0.003;
   }
-  if (active === 3) w.globe.rotation.y += dt * 0.018;
   if (w.particles && !reduced) w.particles.rotation.y = time * 0.003;
   placeCamera();
   refreshPrimaryAction();

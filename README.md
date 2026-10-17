@@ -90,6 +90,8 @@ Earth/星球层使用更快的固定移动速度（38 场景单位/游戏秒）�
 
 ## 常用命令
 
+Earth 的美术方向与概念图见 [视觉提升提案](docs/earth-visual-improvement-proposal.md)。当前代码已加入银河/星等、分离云层、四天体程序材质和少量合批岩体；使用离线生成，不读取文档概念图。代码QA与画面/性能验收分别记录，见[视觉QA](docs/earth-visual-qa-results.md)和[用户检查单](docs/earth-visual-manual-qa.md)。
+
 ```sh
 npm run check          # 格式、lint、单元与仓库检查、静态打包
 npx playwright install chromium

@@ -13,8 +13,15 @@ export function withCanvas(run) {
       'closePath',
       'fill',
       'ellipse',
+      'putImageData',
+      'drawImage',
     ].map((name) => [name, () => {}]),
   );
+  context.createImageData = (width, height) => ({
+    width,
+    height,
+    data: new Uint8ClampedArray(width * height * 4),
+  });
   context.createLinearGradient = () => ({ addColorStop() {} });
   context.createRadialGradient = () => ({ addColorStop() {} });
   Object.defineProperty(globalThis, 'document', {

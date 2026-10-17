@@ -520,6 +520,53 @@ kbd {
 body[data-world='3'] #veil {
   background: #171c30;
 }
+/* Earth only: legible controls over a bright Sun or a crossing galaxy band. */
+body[data-world='3'] {
+  --dim: rgba(241, 238, 223, 0.78);
+  --line: rgba(241, 238, 223, 0.3);
+}
+body[data-world='3'] .grain {
+  background: linear-gradient(
+    180deg,
+    #05091433,
+    transparent 20%,
+    transparent 65%,
+    #05091480
+  );
+}
+body[data-world='3'] .world-label {
+  padding: 16px 18px;
+  border-radius: 8px;
+  background: #050914e6;
+  text-shadow: 0 2px 18px #000;
+}
+body[data-world='3'] .world-tabs,
+body[data-world='3'] .top-actions button,
+body[data-world='3'] #toast,
+body[data-world='3'] #invite {
+  background: #0b1222f5;
+}
+body[data-world='3'] #encounter {
+  background: #050914e6;
+  padding: 14px 20px;
+  border-radius: 8px;
+}
+body[data-world='3'] .brand,
+body[data-world='3'] .edition,
+body[data-world='3'] .controls,
+body[data-world='3'] .footer-note,
+body[data-world='3'] .nav-label {
+  background: #050914e6;
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+body[data-world='3'] .nav-label span,
+body[data-world='3'] .world-tabs kbd {
+  opacity: 1;
+}
+body[data-world='3'] #thought-source {
+  color: #ddd5c2;
+}
 @media (max-width: 1000px) {
   header {
     left: 24px;

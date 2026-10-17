@@ -61,3 +61,9 @@ Linux 首次安装浏览器可使用 `npx playwright install --with-deps chromiu
 按相同分工执行`npm run check`，不运行/新增浏览器自动化、不下载浏览器，保留已有E2E/CI。新增world-movement与earth-ringed-planet测试：真实生产正常位移、四层速度/边界、输入锁存、非法请求、实际反馈与预算、真实工厂组合、2秒/12单位/6秒边界、暂停/取消、启停、减弱动态与资源引用稳定。全部原38项有效测试不删不放宽。主循环事件与镜头顺序另作源码审查，真实事件接线和显示依赖用户[T1–T7](earth-v3-manual-qa.md)，记录见[V3 QA](earth-v3-qa-results.md)。
 
 可选heap/GC诊断使用单独的诊断会话，可能需要启动标志、CDP或DevTools；普通页面不能可靠强制GC是预期情况，记未验证，Node引用稳定不能证明无泄漏。正式性能使用与基线一致的普通无特殊标志配置，避免诊断/DevTools开销，不混用两个会话的帧时间。两项均不是日常手验前置。
+
+## Earth视觉的QA分工
+
+[实施计划](earth-visual-implementation-plan.md)与[S0证据](earth-visual-step0-evidence.md)将历史失败、新check、E2E未执行及人工性能分别记录。新Node测试覆盖确定性/球面接缝、真实工厂9纹理及共享/数据空间、原对象/原动作基线、唯一视觉更新/暂停/减弱动态、全包络岩体安全距离、100周期资源引用稳定。不能证明Shader已在GPU编译或视觉合格。结果见[视觉QA](earth-visual-qa-results.md)。
+
+用户按[V0–V8](earth-visual-manual-qa.md)手验。保留c97b8bb旧版worktree及新旧同一手动采样服务，依赖真实RAF和renderer.info；统计工具使用标准median与nearest-rank P95，拒绝缺6轮样本、版本混用、条件不同或未确认硬件加速/环境的记录。普通配置性能与GC/heap诊断分会话。本轮不启动/控制浏览器、不新增/运行E2E、未测GPU/真实帧率。
