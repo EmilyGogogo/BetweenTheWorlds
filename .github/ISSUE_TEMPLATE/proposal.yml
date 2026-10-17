@@ -1,0 +1,25 @@
+name: 想法提案
+description: 一起讨论体验、视觉、声音或技术方向
+title: '[提案] '
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 想改善什么体验
+      description: 描述玩家或贡献者的具体问题，以及与项目方向的关系。
+    validations:
+      required: true
+  - type: textarea
+    id: approach
+    attributes:
+      label: 方案、替代方案与范围
+      description: 包含不做什么、依赖、素材来源或需要一起决定的事情。
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: 怎样验证有帮助
+      description: 提出可观察的体验结果或受限原型；不要求现在就写实现。
+    validations:
+      required: true

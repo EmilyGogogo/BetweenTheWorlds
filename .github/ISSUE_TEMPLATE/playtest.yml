@@ -1,0 +1,22 @@
+name: 试玩反馈
+description: 分享感受、理解障碍和体验建议，无需懂代码
+title: '[试玩] '
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: 在什么环境玩了哪些内容
+      description: 浏览器、设备、大致时长、探索过的尺度；若知道版本请一并填写。
+    validations:
+      required: true
+  - type: textarea
+    id: experience
+    attributes:
+      label: 最有感受或最困惑的时刻
+      description: 可以描述操作、画面、声音、文字和尺度变化，不必先提出解决方案。
+    validations:
+      required: true
+  - type: textarea
+    id: wishes
+    attributes:
+      label: 希望保留或改善什么

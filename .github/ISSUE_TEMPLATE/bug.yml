@@ -1,0 +1,25 @@
+name: 问题报告
+description: 记录可复现的游戏或仓库问题
+title: '[问题] '
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 期望与实际行为
+      description: 说明发生在哪个尺度、对体验的影响及是否可以重复发生。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 最小复现步骤
+      placeholder: 从打开页面开始，列出具体操作与触发条件。
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境与证据
+      description: 版本/提交、操作系统、浏览器版本、设备、窗口大小、错误日志。请移除个人数据与秘密。
+    validations:
+      required: true

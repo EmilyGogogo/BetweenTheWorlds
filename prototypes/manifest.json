@@ -1,0 +1,9 @@
+{
+  "source": "用户提供的第一版 Demo；原始附件按字节保留",
+  "sha256": {
+    "prototypes/offline-demo.html": "882d51d89682c49a58054b6320cad636a0ca2555b04e4ac5ade3e5adbc58148b",
+    "prototypes/original-play-guide.md": "3c44a30c2644b44ddd4c2c64f8f9ef69af63714e0742ef95d33f2846c84c81b8",
+    "vendor/three.module.js": "ce1fa418de16a19495a9f72495580e3015d7745c296d3ce0485897f902ddedfb",
+    "vendor/LICENSE-three.txt": "4c40a1ef62450b857c3b2aaf294936304cd552d965fbcd9d32d4c5bcf4ba4454"
+  }
+}

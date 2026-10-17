@@ -1,0 +1,5 @@
+* text=auto eol=lf
+prototypes/offline-demo.html -text
+prototypes/original-play-guide.md -text
+vendor/three.module.js -text
+vendor/LICENSE-three.txt -text

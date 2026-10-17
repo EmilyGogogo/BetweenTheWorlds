@@ -1,0 +1,25 @@
+name: 协作任务
+description: 将已明确的工作拆为可认领、可验收的任务
+title: '[任务] '
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: 目标与上下文
+      description: 关联提案、roadmap 编号或决策记录，说明为什么需要这项工作。
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: 范围、负责人和依赖
+      description: 说明涉及模块、范围外事项、待认领或已认领的人、上游依赖和共同文件的协调方式。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收标准与验证路径
+      description: 用可观察结果列出完成条件，包含测试、试玩或内容审阅方式。
+    validations:
+      required: true

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#172a27" />
+    <meta
+      name="description"
+      content="成为一株草、一个人、一座岛、一颗星球。在不同的尺度里，重新寻找自己的位置。"
+    />
+    <link rel="icon" href="data:," />
+    <title>万物之间 · Between Worlds</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+  </head>
+  <body>
+    <canvas id="world" aria-label="可探索的三维自然世界"></canvas>
+    <div class="grain" aria-hidden="true"></div>
+    <div id="veil" aria-hidden="true"></div>
+    <header>
+      <a class="brand" href="#" aria-label="万物之间主页"
+        ><span class="brand-icon">◌</span
+        ><span>万物之间<small>BETWEEN WORLDS</small></span></a
+      >
+      <div class="top-actions">
+        <span class="edition">一场关于存在的漫游</span
+        ><button id="sound" title="开启或关闭环境声" aria-label="开启环境声">
+          声音 关</button
+        ><button id="help" title="操作说明">?</button>
+      </div>
+    </header>
+    <aside class="world-label">
+      <div class="eyebrow">
+        <span class="live-dot"></span><span id="chapter">01 / 微观</span>
+      </div>
+      <h1 id="world-name">一株草</h1>
+      <p id="world-description">风经过你的身体，也经过整片原野。</p>
+      <div class="scale">
+        <span id="scale-value">≈ 10 厘米</span><span class="scale-line"></span
+        ><span>你此刻的尺度</span>
+      </div>
+    </aside>
+    <div id="encounter" role="status">
+      <span id="speaker"></span>
+      <p id="thought"></p>
+      <small id="thought-source"></small>
+    </div>
+    <div id="invite" class="hidden">
+      <kbd>E</kbd><span>邀请这株草一起走</span>
+    </div>
+    <div id="companions" class="hidden">
+      同行 <span id="companion-count">0</span> / 12
+    </div>
+    <div id="toast" role="status"></div>
+    <footer>
+      <div class="controls">
+        <span><kbd>W A S D</kbd> 移动</span
+        ><span><span class="mouse-icon">↔</span> 拖动观察</span
+        ><span><kbd>滚轮</kbd> 远近</span>
+      </div>
+      <nav aria-label="选择存在尺度">
+        <div class="nav-label">成为万物 <span>CHOOSE YOUR SCALE</span></div>
+        <div class="world-tabs">
+          <button data-world="0" class="active" aria-pressed="true">
+            <span class="tab-number">01</span><span class="tab-icon">♧</span
+            ><span>草<small>微观原野</small></span
+            ><kbd>1</kbd></button
+          ><button data-world="1" aria-pressed="false">
+            <span class="tab-number">02</span><span class="tab-icon">♙</span
+            ><span>人<small>大地行者</small></span
+            ><kbd>2</kbd></button
+          ><button data-world="2" aria-pressed="false">
+            <span class="tab-number">03</span><span class="tab-icon">△</span
+            ><span>岛屿<small>海的旅人</small></span
+            ><kbd>3</kbd></button
+          ><button data-world="3" aria-pressed="false">
+            <span class="tab-number">04</span><span class="tab-icon">◉</span
+            ><span>星球<small>宇宙尘埃</small></span
+            ><kbd>4</kbd>
+          </button>
+        </div>
+      </nav>
+      <div class="footer-note">没有目的地。<br />只有不同的存在。</div>
+    </footer>
+    <section
+      id="welcome"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="welcome-title"
+    >
+      <div class="welcome-inner">
+        <div class="eyebrow">AN EXPLORATION OF EXISTENCE</div>
+        <h2 id="welcome-title">世界，没有中心。</h2>
+        <p>
+          你可以是一株草，也可以是一颗星球。<br />换一种存在，让熟悉的世界重新陌生。
+        </p>
+        <button id="begin">进入万物之间 <span>↗</span></button
+        ><small>键鼠探索 · 按 1—4 切换尺度 · 建议开启声音</small>
+      </div>
+      <div class="welcome-bottom">人只是万物中的一种存在。</div>
+    </section>
+    <section
+      id="help-panel"
+      class="hidden"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="help-title"
+    >
+      <button id="close-help" aria-label="关闭说明">×</button>
+      <div class="eyebrow">A FIELD GUIDE</div>
+      <h2 id="help-title">不必到达哪里。</h2>
+      <p>
+        W / S 前后移动，A / D 左右移动。<br />按住鼠标左键拖动，环绕观察；滚轮调整远近。<br />按
+        1—4 或点击底部，成为另一种存在。<br />草层靠近其他草，按 E
+        邀请它们同行。
+      </p>
+      <p>慢下来，靠近石头、花朵或远处的星体。<br />有时，世界会回应你。</p>
+      <small
+        >对白为游戏原创，部分受《庄子》与《沉思录》启发，非哲学家原话。<br />程序生成
+        3D 场景 · 无分数 · 无通关目标</small
+      >
+      <div class="help-links">
+        <a
+          href="https://ctext.org/zhuangzi/floods-of-autumn/zh"
+          target="_blank"
+          rel="noopener"
+          >《庄子·秋水》 ↗</a
+        ><a
+          href="https://www.gutenberg.org/ebooks/55317"
+          target="_blank"
+          rel="noopener"
+          >《沉思录》 ↗</a
+        >
+      </div>
+    </section>
+    <div id="loading">正在唤醒原野…</div>
+    <noscript>请开启 JavaScript 以进入三维世界。</noscript>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

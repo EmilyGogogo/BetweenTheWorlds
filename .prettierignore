@@ -1,0 +1,10 @@
+node_modules/
+dist/
+coverage/
+test-results/
+playwright-report/
+.local/
+vendor/
+prototypes/offline-demo.html
+prototypes/original-play-guide.md
+package-lock.json
