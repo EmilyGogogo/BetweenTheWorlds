@@ -84,6 +84,13 @@ export function makeMicro(tools) {
       object: fl,
       range: 5,
       name: '雏菊',
+      embodiment: {
+        kind: 'flower',
+        height: 1.7,
+        distance: 8,
+        speed: 1.2,
+        scale: '≈ 30 厘米',
+      },
       lines: [
         ['你说我是野花。可在我这里，你才是过客。', '原创 · 万物之间'],
         ['朝向太阳，并不是为了被谁看见。', '原创 · 万物之间'],
@@ -94,6 +101,13 @@ export function makeMicro(tools) {
       object: r,
       range: 5,
       name: '石头',
+      embodiment: {
+        kind: 'rock',
+        height: 0.4,
+        distance: 6,
+        speed: 1,
+        ground: (x, z) => microHeight(x, z) + 0.52,
+      },
       lines: [
         ['你的一生很长。也许，只是我的一个清晨。', '原创 · 万物之间'],
         [

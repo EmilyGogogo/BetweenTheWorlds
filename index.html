@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="./src/styles.css" />
   </head>
   <body>
-    <canvas id="world" aria-label="可探索的三维自然世界"></canvas>
+    <canvas id="world" tabindex="-1" aria-label="可探索的三维自然世界"></canvas>
     <div class="grain" aria-hidden="true"></div>
     <div id="veil" aria-hidden="true"></div>
     <header>
@@ -45,11 +45,17 @@
       <small id="thought-source"></small>
     </div>
     <div id="invite" class="hidden">
-      <kbd>E</kbd><span>邀请这株草一起走</span>
+      <kbd>E</kbd><span id="invite-label">邀请这株草一起走</span>
     </div>
     <div id="companions" class="hidden">
       同行 <span id="companion-count">0</span> / 12
     </div>
+    <button
+      id="soul-ripple"
+      class="hidden"
+      aria-label="魂穿附近的存在"
+      aria-keyshortcuts="R"
+    ></button>
     <div id="toast" role="status"></div>
     <footer>
       <div class="controls">
@@ -94,7 +100,7 @@
           你可以是一株草，也可以是一颗星球。<br />换一种存在，让熟悉的世界重新陌生。
         </p>
         <button id="begin">进入万物之间 <span>↗</span></button
-        ><small>键鼠探索 · 按 1—4 切换尺度 · 建议开启声音</small>
+        ><small>靠近涟漪，按 R 换一种存在。</small>
       </div>
       <div class="welcome-bottom">人只是万物中的一种存在。</div>
     </section>
@@ -110,8 +116,10 @@
       <h2 id="help-title">不必到达哪里。</h2>
       <p>
         W / S 前后移动，A / D 左右移动。<br />按住鼠标左键拖动，环绕观察；滚轮调整远近。<br />按
-        1—4 或点击底部，成为另一种存在。<br />草层靠近其他草，按 E
-        邀请它们同行。
+        1—4 或点击底部，成为另一种存在。<br />附近的存在泛起涟漪时，按 R
+        直接魂穿，用 WASD 移动。<br />草和岛屿靠近同类按 E 邀请同行，最多 12
+        位。<br />海鸥和鱼：空格上升、Shift 下降。<br />岛屿可以登岸；海岸涟漪可带你进入大地。<br />拖动视角仰望太阳，待光中泛起涟漪后按
+        R。
       </p>
       <p>慢下来，靠近石头、花朵或远处的星体。<br />有时，世界会回应你。</p>
       <small
