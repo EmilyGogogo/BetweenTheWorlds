@@ -1,6 +1,52 @@
 import * as THREE from '../../vendor/three.module.js';
 
-export function makeHuman(tools) {
+// 人层角色使用 assets/ 下的 glTF 模型（来源见 assets/README.md）。
+// 模型原点在脚底、无骨骼与动画；行走表现由主循环对 userData.body 做起伏与摆动。
+const AVATAR_MODEL_URL = new URL(
+  '../../assets/models/human-avatar.glb',
+  import.meta.url,
+);
+const AVATAR_HEIGHT = 1.75;
+
+// 开始下载并整理人物模型。在进入人层之前调用，避免切换时角色缺席。
+export async function loadHumanAvatar() {
+  // The browser resolves the loader's bare `three` import through index.html's
+  // import map. Keeping this dynamic lets Node unit tests build other scenes
+  // without requiring a second Three.js package installation.
+  const { GLTFLoader } =
+    await import('../../vendor/examples/jsm/loaders/GLTFLoader.js');
+  return new GLTFLoader()
+    .loadAsync(AVATAR_MODEL_URL.href)
+    .then((gltf) => prepareAvatarModel(gltf.scene));
+}
+
+function prepareAvatarModel(model) {
+  model.traverse((object) => {
+    if (!object.isMesh) return;
+    object.castShadow = true;
+    // 导出工具把烘焙贴图放在自发光通道（不受光照）。改为基础色贴图，
+    // 让角色与场景一样接受日光、阴影和色调映射。
+    const exported = object.material;
+    if (exported.emissiveMap && !exported.map) {
+      object.material = new THREE.MeshStandardMaterial({
+        map: exported.emissiveMap,
+        roughness: 1,
+        metalness: 0,
+        side: exported.side,
+      });
+      exported.dispose();
+    }
+  });
+  const bounds = new THREE.Box3().setFromObject(model);
+  const scale = AVATAR_HEIGHT / (bounds.max.y - bounds.min.y);
+  model.scale.setScalar(scale);
+  model.position.y = -bounds.min.y * scale;
+  // 场景中的角色面朝 -z；模型导出时面朝 +z，转半圈对齐。
+  model.rotation.y = Math.PI;
+  return model;
+}
+
+export function makeHuman(tools, avatarModel) {
   const {
     newWorld,
     sky,
@@ -13,59 +59,8 @@ export function makeHuman(tools) {
     tree,
     rand,
     rock,
-    mesh,
-    mat,
     particles,
   } = tools;
-  function human() {
-    const g = new THREE.Group(),
-      coat = mat('#b9b3a0'),
-      pants = mat('#414a48'),
-      skin = mat('#b19a7c');
-    mesh(new THREE.SphereGeometry(0.18, 12, 8), skin, g, 0, 1.57, 0);
-    const body = mesh(
-      new THREE.CylinderGeometry(0.23, 0.19, 0.64, 9),
-      coat,
-      g,
-      0,
-      1.09,
-      0,
-    );
-    body.castShadow = true;
-    const limbs = [];
-    for (const side of [-1, 1]) {
-      const leg = new THREE.Group();
-      leg.position.set(side * 0.12, 0.8, 0);
-      g.add(leg);
-      mesh(
-        new THREE.CylinderGeometry(0.075, 0.065, 0.7, 7),
-        pants,
-        leg,
-        0,
-        -0.35,
-        0,
-      );
-      mesh(new THREE.BoxGeometry(0.15, 0.1, 0.28), pants, leg, 0, -0.69, -0.05);
-      limbs.push(leg);
-      const arm = new THREE.Group();
-      arm.position.set(side * 0.29, 1.34, 0);
-      g.add(arm);
-      mesh(
-        new THREE.CylinderGeometry(0.065, 0.05, 0.62, 7),
-        coat,
-        arm,
-        0,
-        -0.3,
-        0,
-      );
-      limbs.push(arm);
-    }
-    g.userData.limbs = limbs;
-    g.traverse((o) => {
-      if (o.isMesh) o.castShadow = true;
-    });
-    return g;
-  }
   function makeHumanScene() {
     const w = newWorld(1),
       s = w.scene;
@@ -92,6 +87,14 @@ export function makeHuman(tools) {
       object: t,
       range: 24,
       name: '老树',
+      embodiment: {
+        kind: 'tree',
+        height: 10,
+        distance: 42,
+        speed: 9,
+        scale: '≈ 20 米',
+        range: 130,
+      },
       lines: [
         ['世界并不在你到来之后，才开始存在。', '原创 · 万物之间'],
         ['你借用的每一口呼吸，都曾属于别的生命。', '原创 · 万物之间'],
@@ -102,12 +105,37 @@ export function makeHuman(tools) {
       object: r,
       range: 13,
       name: '岩石',
+      embodiment: {
+        kind: 'rock',
+        height: 1,
+        distance: 16,
+        speed: 3,
+        range: 85,
+        ground: (x, z) => groundHeight(x, z) + 1.3,
+      },
       lines: [
         ['你站在我身旁，称自己为中心。风却不认识中心。', '原创 · 万物之间'],
       ],
     });
-    w.avatar = human();
+    // avatar 负责位置与朝向；body 承载模型并由主循环做行走起伏。
+    w.avatar = new THREE.Group();
+    const body = new THREE.Group();
+    w.avatar.add(body);
+    w.avatar.userData.body = body;
     s.add(w.avatar);
+    w.avatarState = 'loading';
+    w.avatarReady = avatarModel.then(
+      (model) => {
+        body.add(model);
+        w.avatarState = 'ready';
+        return true;
+      },
+      (error) => {
+        console.error('人物模型加载失败：', error);
+        w.avatarState = 'failed';
+        return false;
+      },
+    );
     w.particles = particles(s, 100, 80, '#fce6ac', 0.05, 15);
     return w;
   }

@@ -104,6 +104,31 @@ export function makeSpace(tools) {
         }),
       ),
     );
+    const solar = new THREE.Group();
+    solar.position.set(...sunSettings.position);
+    s.add(solar);
+    mesh(
+      new THREE.SphereGeometry(sunSettings.radius, 48, 32),
+      new THREE.MeshBasicMaterial({ color: '#ffe1a0', toneMapped: false }),
+      solar,
+    );
+    const halo = atmosphere(solar, sunSettings.haloRadius, '#ffd79d', 0.28);
+    w.entities = [
+      {
+        object: solar,
+        name: '太阳',
+        kind: 'sun',
+        celestial: true,
+        range: 700,
+        distance: 220,
+        height: 0,
+        speed: 35,
+        limit: 1300,
+        ground: null,
+        scale: '≈ 140 万千米',
+      },
+    ];
+    w.primary = { ground: null };
     const tex = planetTexture();
     w.avatar = new THREE.Group();
     s.add(w.avatar);
@@ -150,6 +175,16 @@ export function makeSpace(tools) {
       object: p,
       range: 290,
       name: '有环的星球',
+      embodiment: {
+        kind: 'planet',
+        height: 0,
+        distance: 280,
+        speed: 30,
+        range: 650,
+        limit: 1100,
+        ground: null,
+        scale: '≈ 10 万千米',
+      },
       lines: [
         ['你用距离衡量遥远，用自己衡量一切。', '原创 · 万物之间'],
         ['我们并不独立。引力一直在无声地交谈。', '原创 · 万物之间'],
@@ -170,20 +205,21 @@ export function makeSpace(tools) {
       object: moon,
       range: 75,
       name: '月亮',
+      embodiment: {
+        kind: 'moon',
+        height: 0,
+        distance: 52,
+        speed: 24,
+        range: 500,
+        limit: 1100,
+        ground: null,
+        scale: '≈ 3500 千米',
+      },
       lines: [['你以为你在独行。我的潮汐，却一直跟着你。', '原创 · 万物之间']],
     });
     const moonActions = createMoonCompanion(w, moon);
-    const sunBody = new THREE.Group();
-    sunBody.position.set(...sunSettings.position);
-    s.add(sunBody);
-    mesh(
-      new THREE.SphereGeometry(sunSettings.radius, 40, 28),
-      new THREE.MeshBasicMaterial({ color: '#ffe1a0', toneMapped: false }),
-      sunBody,
-    );
-    const halo = atmosphere(sunBody, sunSettings.haloRadius, '#ffd79d', 0.28);
-    const sunActions = createSunResponse(w, sunBody, halo, {
-      object: sunBody,
+    const sunActions = createSunResponse(w, solar, halo, {
+      object: solar,
       range: sunSettings.talkRange,
       name: '太阳',
       lines: [
