@@ -7,13 +7,24 @@
 ```text
 index.html                 语义结构、入口与操作提示
 src/main.js                会话状态、输入、切换、镜头、对白触发、音频与动画循环
+src/fieldwork.js           人层田野观察：第一人称、人物切换、观察笔记、能力与动物模拟
 src/styles.css             现有界面样式与响应式布局
 src/content/worlds.js      四层名称、尺度、镜头与移动参数
+src/content/characters.js  人层人物：背景、性格、能力、偏好、缺点与行为数值
+src/content/fauna.js       动物物种：脾性、按视角区分的观察笔记、栖息地
+src/content/clues.js       自然线索：哪些视角能察觉、各自读到什么
+src/content/residents.js   原野上的其他人：年龄、日程、反应、按视角区分的笔记与台词
 src/core/random.js         可复现的随机数生成器
+src/core/wildlife.js       动物行为状态机（纯逻辑，不依赖 Three.js）
+src/core/observation.js    观察规则：察觉、笔记选择与观察距离
+src/core/residents.js      其他人的日程与反应状态机（纯逻辑，不依赖 Three.js）
 src/worlds/index.js        场景工厂装配
 src/worlds/shared.js       地形、植被、光照、天空与共用渲染工具
 src/worlds/micro.js        草层
-src/worlds/human.js        人层
+src/worlds/human.js        人层：稀树草原、线索与动物布置、人物模型装配
+src/worlds/people.js       人物全身模型与第一人称手部/道具
+src/worlds/animals.js      动物低多边形模型与按状态摆姿
+src/worlds/residents.js    其他人的体态、衣物、随身物件与按状态摆姿
 src/worlds/island.js       岛屿层
 src/worlds/space.js        星球层
 vendor/                    保持原件的引擎与第三方许可
@@ -30,13 +41,25 @@ docs/                      方向、任务、验证、维护与决策
 
 场景状态包含 `scene`、`position`、`avatar`、`talkers`、`followers`、`recruitables`。对白实体包含 `object`、`range`、`name`、`lines`，每条 `lines` 记录正文与来源说明。层特有数据由所属模块创建，主循环只更新实际需要的部分。
 
+人层额外提供 `cast`（每位人物的全身模型与手部）、`animals`（行为状态 `sim` 与外观 `view`）、`residents`（`def`、`sim`、`view`）、`residentViews`、`clues`、`fauna`、`pondLevel`、`animate(time)`、`setTrailGlow(amount)` 与 `sunOffset`。这些只由 `src/fieldwork.js` 与 `main.js` 的人层分支读取。
+
+其他人与动物共用同一个观察者对象。`fieldwork` 每帧先推进动物、再推进其他人；奔跑的孩子会借 `startle()` 惊动附近的动物。栖息地的 `follow` 指向一位居民或另一处栖息地的 `id`，被跟随者的 `sim` 写入动物的 `leader`，动物便以它当前的位置为家（羊群跟着牧人，小象跟着母象）。`scale` 是个体大小。
+
+`people.js` 的 `person(look)` 把上身与头放进以髋部、颈部为轴的关节组，`userData` 提供 `limbs`、`torso`、`head`、`hands`；玩家形象仍只摆动 `limbs`。`createPeople()` 另外导出 `binoculars`，供巡护员复用。
+
+`main.js` 通过 `createFieldwork()` 返回的接口接入人层：`setVisible`、`isBlocking`、`closePanel`、`handleKey`、`update`、`placeCamera`、`speedScale`、`lookVertical`。`placeCamera` 返回 `true` 时由它负责第一人称或形象预览镜头，否则沿用环绕镜头。人物面板打开时阻止移动与切层按键。
+
+动物、其他人的行为与观察规则放在 `src/core/`，只操作平面坐标与状态，可以直接用单元测试验证；渲染层根据 `state` 和 `speed` 摆姿。人物、动物、居民和线索的文字与数值集中在 `src/content/`，新增内容时同步运行 `tests/unit/observation.test.mjs` 与 `tests/unit/residents.test.mjs` 中的完整性检查。
+
 共享工具作为参数注入四层，避免场景直接依赖主控制器。地面高度函数同时用于地形、角色和镜头，修改时三者需要一起验证。
 
 ## 当前限制
 
-场景首次使用时创建并缓存，离开不会释放 GPU 资源；刷新才完全重置。主控制器仍包含输入、音频和对白，后续按真实任务逐步拆分。场景工厂嵌套函数沿用 Demo 结构，避免一次重写引入行为偏差。
+场景首次使用时创建并缓存，离开不会释放 GPU 资源；刷新才完全重置。人层的五套人物模型、手部、九位居民和全部动物随场景一起创建并常驻，切换人物只替换场景中的全身模型并切换手部可见性，不重复创建资源。动物模拟与田野笔记只在人层激活时更新，笔记仅保留在本次会话。主控制器仍包含输入、音频和对白，后续按真实任务逐步拆分。场景工厂嵌套函数沿用 Demo 结构，避免一次重写引入行为偏差。
 
-共享随机源为固定种子，但各层首次进入的顺序会影响随机消耗，因此不同访问顺序的场景细节可能不同。当前尚未承诺跨会话完全一致的世界。
+共享随机源为固定种子，但各层首次进入的顺序会影响随机消耗，因此不同访问顺序的场景细节可能不同。当前尚未承诺跨会话完全一致的世界。随机散布的石头和金合欢若落进水塘、牧人小屋等空地，会在建场景时移除（见 `human.js` 的 `CLEARINGS`）。
+
+人层动物与居民都由独立网格拼成，没有合批：在 1280 × 760 的软件 WebGL 下，从出生点、水塘、牧人小屋看去的单帧绘制调用约为 620、300、760（`renderer.info.render.calls`，即一次 `render()` 的总数）。这只是开发时的观察值，不是性能验收；正式预算见 PERF-01。
 
 ## 分工建议
 

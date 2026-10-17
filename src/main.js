@@ -1,6 +1,7 @@
 import * as THREE from '../vendor/three.module.js';
 import { descriptions } from './content/worlds.js';
 import { createWorldFactory } from './worlds/index.js';
+import { createFieldwork } from './fieldwork.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('world');
@@ -57,6 +58,19 @@ function getWorld(index) {
   if (!worlds[index]) worlds[index] = builders[index]();
   return worlds[index];
 }
+const fieldwork = createFieldwork({
+  getWorld: () => getWorld(1),
+  camera,
+  canvas,
+  toast,
+  clearInput: () => {
+    keys.clear();
+    drag = null;
+  },
+  reduced,
+  limit: descriptions[1].limit,
+});
+const sneaking = () => keys.has('ShiftLeft') || keys.has('ShiftRight');
 function updateUI() {
   const d = descriptions[active];
   $('world-name').textContent = d.name;
@@ -71,6 +85,7 @@ function updateUI() {
   });
   $('companions').classList.toggle('hidden', active !== 0);
   $('companion-count').textContent = getWorld(0).followers.length;
+  fieldwork.setVisible(active === 1);
 }
 async function switchWorld(index) {
   if (index === active || switching || !started) return;
@@ -111,6 +126,10 @@ function placeCamera(immediate = false) {
         ? groundHeight(p.x, p.z)
         : 0;
   w.avatar.position.set(p.x, h, p.z);
+  if (active === 1 && fieldwork.placeCamera(w, yaw, zoom, immediate)) {
+    if (w.sky) w.sky.position.copy(camera.position);
+    return;
+  }
   target.set(p.x, h + d.height, p.z);
   const distance = d.distance * zoom;
   desired.set(
@@ -127,6 +146,7 @@ function placeCamera(immediate = false) {
   }
   camera.near = active === 0 ? 0.025 : 0.1;
   camera.far = 3500;
+  camera.fov = 52;
   camera.updateProjectionMatrix();
   if (immediate) camera.position.copy(desired);
   else camera.position.lerp(desired, 0.085);
@@ -289,10 +309,15 @@ function closeHelp() {
 $('close-help').onclick = closeHelp;
 addEventListener('keydown', (e) => {
   if (e.code === 'Escape') {
-    closeHelp();
+    if (!fieldwork.closePanel()) closeHelp();
     return;
   }
   if (!started || !$('help-panel').classList.contains('hidden')) return;
+  // 人物面板打开时，方向键与空格交给面板里的按钮。
+  if (fieldwork.isBlocking()) {
+    if (e.code === 'KeyC' && !e.repeat) fieldwork.closePanel();
+    return;
+  }
   if (
     [
       'KeyW',
@@ -311,6 +336,7 @@ addEventListener('keydown', (e) => {
   if (e.code.startsWith('Digit') && +e.key >= 1 && +e.key <= 4)
     switchWorld(+e.key - 1);
   if (e.code === 'KeyE' && !e.repeat) recruit();
+  if (active === 1 && !switching && !e.repeat) fieldwork.handleKey(e.code, yaw);
 });
 addEventListener('keyup', (e) => keys.delete(e.code));
 addEventListener('blur', () => {
@@ -326,7 +352,9 @@ canvas.addEventListener('pointerdown', (e) => {
 canvas.addEventListener('pointermove', (e) => {
   if (!drag) return;
   yaw -= (e.clientX - drag.x) * 0.005;
-  pitch = Math.max(0.04, Math.min(1.15, pitch + (e.clientY - drag.y) * 0.004));
+  const dy = e.clientY - drag.y;
+  if (!(active === 1 && fieldwork.lookVertical(dy)))
+    pitch = Math.max(0.04, Math.min(1.15, pitch + dy * 0.004));
   drag = { x: e.clientX, y: e.clientY };
 });
 canvas.addEventListener('pointerup', () => {
@@ -360,7 +388,12 @@ function animate() {
     d = descriptions[active];
   let dx = 0,
     dz = 0;
-  if (started && !switching && $('help-panel').classList.contains('hidden')) {
+  if (
+    started &&
+    !switching &&
+    !fieldwork.isBlocking() &&
+    $('help-panel').classList.contains('hidden')
+  ) {
     if (keys.has('KeyW') || keys.has('ArrowUp')) dz -= 1;
     if (keys.has('KeyS') || keys.has('ArrowDown')) dz += 1;
     if (keys.has('KeyA') || keys.has('ArrowLeft')) dx -= 1;
@@ -372,8 +405,10 @@ function animate() {
     const len = Math.hypot(dx, dz),
       x = (dx * Math.cos(yaw) + dz * Math.sin(yaw)) / len,
       z = (-dx * Math.sin(yaw) + dz * Math.cos(yaw)) / len;
-    w.position.x += x * d.speed * dt;
-    w.position.z += z * d.speed * dt;
+    const speed =
+      d.speed * (active === 1 ? fieldwork.speedScale(sneaking()) : 1);
+    w.position.x += x * speed * dt;
+    w.position.z += z * speed * dt;
     const dist = Math.hypot(w.position.x, w.position.z);
     if (dist > d.limit) w.position.multiplyScalar(d.limit / dist);
     if (active < 2) {
@@ -411,9 +446,10 @@ function animate() {
         : Math.sin(time * 1.2) * 0.02;
     });
     if (w.sun) {
-      w.sun.position.set(w.position.x - 60, 58, w.position.z - 75);
+      w.sun.position.copy(w.avatar.position).add(w.sunOffset);
       w.sun.target.position.copy(w.avatar.position);
     }
+    fieldwork.update(dt, time, { moving, sneaking: sneaking(), yaw });
   }
   if (active === 2) {
     w.avatar.rotation.y += dt * 0.008;

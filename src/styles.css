@@ -520,6 +520,279 @@ kbd {
 body[data-world='3'] #veil {
   background: #171c30;
 }
+/* 人层：人物、观察与田野笔记 */
+.human-only {
+  display: none !important;
+}
+body[data-world='1'] .human-only {
+  display: flex !important;
+}
+#naturalist {
+  position: fixed;
+  right: 40px;
+  top: 92px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 9px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--dim);
+}
+#character-button {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 10px;
+  align-items: baseline;
+  text-align: right;
+  border: 1px solid var(--line);
+  background: #13242050;
+  backdrop-filter: blur(12px);
+  border-radius: 8px;
+  padding: 10px 34px 10px 14px;
+}
+.naturalist-eyebrow {
+  grid-column: 1 / -1;
+  font-size: 8px;
+  letter-spacing: 3px;
+  color: var(--dim);
+  margin-bottom: 4px;
+}
+#character-name {
+  font-family: 'Noto Serif SC', 'Songti SC', serif;
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: 4px;
+}
+#character-focus {
+  font-size: 9px;
+  color: #e9d299;
+}
+#character-button kbd {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  font-size: 8px;
+  opacity: 0.6;
+}
+.naturalist-row {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+#journal-count,
+#ability-name {
+  color: var(--cream);
+}
+#ability-state {
+  color: #e9d299;
+}
+#wind-arrow {
+  display: inline-block;
+  font-size: 15px;
+  color: var(--cream);
+  transition: transform 0.4s;
+}
+#observe-hint {
+  position: fixed;
+  bottom: 148px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  z-index: 4;
+  background: #182b23c9;
+  padding: 9px 14px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  pointer-events: none;
+}
+#observe-specialty {
+  font-size: 9px;
+  color: #e9d299;
+}
+#observe-specialty:empty {
+  display: none;
+}
+#field-note {
+  position: fixed;
+  right: 40px;
+  top: 34%;
+  width: min(330px, 40vw);
+  z-index: 3;
+  padding: 18px 20px;
+  background: #f1e9d4ee;
+  color: #2f3326;
+  border-radius: 4px;
+  box-shadow: 0 10px 40px #0a141260;
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.6s,
+    transform 0.6s;
+  pointer-events: none;
+}
+#field-note.visible {
+  opacity: 1;
+  transform: none;
+}
+#field-note-title {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #7a6234;
+}
+#field-note-text {
+  font-family: 'Noto Serif SC', 'Songti SC', serif;
+  font-size: 14px;
+  line-height: 1.95;
+  letter-spacing: 1px;
+  margin: 10px 0 6px;
+}
+#field-note-reaction {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #5b6a3a;
+  margin: 0 0 8px;
+}
+#field-note-reaction:empty {
+  display: none;
+}
+#field-note-meta {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #8b7f63;
+}
+#binocular-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: #050807;
+  -webkit-mask:
+    radial-gradient(circle at 39% 50%, transparent 30vmin, #000 31vmin),
+    radial-gradient(circle at 61% 50%, transparent 30vmin, #000 31vmin);
+  -webkit-mask-composite: source-in;
+  mask:
+    radial-gradient(circle at 39% 50%, transparent 30vmin, #000 31vmin),
+    radial-gradient(circle at 61% 50%, transparent 30vmin, #000 31vmin);
+  mask-composite: intersect;
+}
+body.choosing-character .world-label,
+body.choosing-character #naturalist,
+body.choosing-character #toast {
+  opacity: 0;
+}
+#character-panel {
+  position: fixed;
+  right: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(440px, 92vw);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 34px 34px 28px;
+  background: #172b29ee;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  z-index: 10;
+  backdrop-filter: blur(15px);
+}
+#character-panel h2 {
+  font-size: 26px;
+  letter-spacing: 4px;
+  margin: 12px 0 18px;
+}
+#close-characters {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  border: 0;
+  background: none;
+  font-size: 24px;
+  color: var(--dim);
+}
+#character-list {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.character-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: center;
+  padding: 10px 4px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: transparent;
+  transition: background 0.3s;
+}
+.character-card strong {
+  font-family: 'Noto Serif SC', 'Songti SC', serif;
+  font-weight: 400;
+  font-size: 15px;
+  letter-spacing: 2px;
+}
+.character-card span {
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.character-card:hover {
+  background: #eee6cb12;
+}
+.character-card[aria-checked='true'] {
+  background: #eee6cb24;
+  border-color: #e7cf96;
+}
+#character-detail h3 {
+  font-family: 'Noto Serif SC', 'Songti SC', serif;
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: 5px;
+  margin: 22px 0 6px;
+}
+#detail-meta {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #e9d299;
+  margin: 0 0 12px;
+}
+#character-detail dl {
+  display: grid;
+  grid-template-columns: 4.5em 1fr;
+  gap: 8px 12px;
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.8;
+}
+#character-detail dt {
+  color: var(--dim);
+  letter-spacing: 2px;
+}
+#character-detail dd {
+  margin: 0;
+  color: #e6e4d0;
+}
+#confirm-character {
+  margin-top: 22px;
+  width: 100%;
+  border: 1px solid #e5d8ad80;
+  background: #e8dabb18;
+  padding: 13px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  border-radius: 2px;
+}
+#confirm-character:hover {
+  background: #e8dabb35;
+}
 @media (max-width: 1000px) {
   header {
     left: 24px;
@@ -546,6 +819,15 @@ body[data-world='3'] #veil {
   }
   #thought {
     font-size: 17px;
+  }
+  #naturalist {
+    right: 24px;
+  }
+  #field-note {
+    right: 24px;
+    top: auto;
+    bottom: 200px;
+    width: min(330px, 60vw);
   }
 }
 @media (max-height: 650px) {
@@ -575,8 +857,12 @@ body[data-world='3'] #veil {
   .world-tabs button {
     padding: 14px 12px;
   }
-  #invite {
+  #invite,
+  #observe-hint {
     bottom: 120px;
+  }
+  #naturalist {
+    top: 72px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
