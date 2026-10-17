@@ -13,7 +13,7 @@ export function performPrimaryAction({
   recruit,
 }) {
   if (repeat || !context.canInteract) return null;
-  if (active === 0) {
+  if (active === 0 || world.controlled?.kind === 'island') {
     recruit();
     return null;
   }
@@ -23,7 +23,12 @@ export function performPrimaryAction({
 
 export function primaryActionLabel(active, world, context, nearGrass) {
   if (!context.canInteract) return null;
-  if (active === 0) return nearGrass ? '邀请这株草一起走' : null;
+  if (active === 0 || active === 2)
+    return nearGrass
+      ? active === 2
+        ? '邀请这座岛一起漂流'
+        : '邀请这株草一起走'
+      : null;
   return world.getPrimaryAction?.(context)?.label ?? null;
 }
 

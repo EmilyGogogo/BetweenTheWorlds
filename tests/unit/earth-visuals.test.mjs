@@ -16,6 +16,11 @@ import {
   createEarthBackground,
 } from '../../src/worlds/earth-background.js';
 import { withCanvas } from '../helpers/earth-fixture.mjs';
+import {
+  prepareEntities,
+  inhabit,
+  skySunDirection,
+} from '../../src/core/embodiment.js';
 
 const running = {
   dt: 0.05,
@@ -328,7 +333,7 @@ test('main preserves camera renderer and movement, with exactly one world update
   );
   assert.doesNotMatch(source, /globe\.rotation\.y\s*\+=/);
   assert.equal(
-    (source.match(/w\.update\?\.\(actionContext\)/g) || []).length,
+    (source.match(/w\.update(?:\?\.)?\(actionContext\)/g) || []).length,
     1,
   );
   assert.equal(
@@ -337,4 +342,38 @@ test('main preserves camera renderer and movement, with exactly one world update
   );
   assert.match(source, /w\.sky\.position\.copy\(camera\.position\)/);
   assert.match(source, /renderer\.toneMappingExposure = 1\.05/);
+});
+
+test('merged embodiment keeps four original celestial entities and a Group sky cannot become a Sun portal', () => {
+  const world = createEarth();
+  const earth = world.avatar;
+  prepareEntities(world, () => 0);
+  assert.equal(world.entities.length, 4);
+  assert.equal(world.original.object, earth);
+  assert.equal(world.original.ground, null);
+  assert.equal(skySunDirection(world), null);
+  const sun = world.entities.find((entity) => entity.kind === 'sun');
+  const moon = world.entities.find((entity) => entity.kind === 'moon');
+  assert.equal(sun.object, world.sunBody);
+  assert.equal(moon.object, world.moon);
+  assert.equal(
+    world.entities.find((entity) => entity.object === world.ringedPlanet).kind,
+    'planet',
+  );
+  const material = world.sunBody.children[0].material;
+  assert.equal(inhabit(world, sun), true);
+  world.update(running);
+  assert.equal(world.avatar, world.sunBody);
+  assert.equal(world.sunBody.children[0].material, material);
+  assert.equal(world.clouds.parent, earth);
+  assert.equal(inhabit(world, world.original), true);
+  assert.equal(world.avatar, earth);
+  const direction = new THREE.Vector3(0, 1, 0);
+  assert.equal(
+    skySunDirection({
+      sky: { material: { uniforms: { sunDir: { value: direction } } } },
+    }),
+    direction,
+  );
+  assert.equal(skySunDirection({}), null);
 });

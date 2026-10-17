@@ -4,6 +4,8 @@
     "prototypes/offline-demo.html": "882d51d89682c49a58054b6320cad636a0ca2555b04e4ac5ade3e5adbc58148b",
     "prototypes/original-play-guide.md": "3c44a30c2644b44ddd4c2c64f8f9ef69af63714e0742ef95d33f2846c84c81b8",
     "vendor/three.module.js": "ce1fa418de16a19495a9f72495580e3015d7745c296d3ce0485897f902ddedfb",
-    "vendor/LICENSE-three.txt": "4c40a1ef62450b857c3b2aaf294936304cd552d965fbcd9d32d4c5bcf4ba4454"
+    "vendor/LICENSE-three.txt": "4c40a1ef62450b857c3b2aaf294936304cd552d965fbcd9d32d4c5bcf4ba4454",
+    "vendor/examples/jsm/loaders/GLTFLoader.js": "45139faddd5aaf48ed2d62203d976e5cbd703db1a592de40527f9f6cf58abd44",
+    "vendor/examples/jsm/utils/BufferGeometryUtils.js": "c25b7930e570e9ec56173cd3b866ec8d2e10016630db3937efb439daf1cedbf6"
   }
 }

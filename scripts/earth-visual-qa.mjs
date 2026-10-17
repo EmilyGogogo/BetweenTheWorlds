@@ -108,7 +108,7 @@ if (
   }
   const baseline = process.argv.includes('--baseline');
   const root = baseline
-    ? resolve(project, '.local/earth-visual-baseline')
+    ? resolve(project, '.local/earth-visual-baseline-1cacad1')
     : project;
   const port = Number(
     process.argv.find((a) => a.startsWith('--port='))?.slice(7) ??

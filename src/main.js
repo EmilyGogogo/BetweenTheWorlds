@@ -1,5 +1,8 @@
 import * as THREE from '../vendor/three.module.js';
+import { feelingTopics, weatherArrivals } from './content/grass-feelings.js';
 import { descriptions } from './content/worlds.js';
+import { chooseFeeling } from './core/feelings.js';
+import { heightCm } from './core/grass-environment.js';
 import { createWorldFactory } from './worlds/index.js';
 import {
   updateActionContext,
@@ -11,6 +14,12 @@ import {
   createMovementInput,
   createMovementStepper,
 } from './core/world-movement.js';
+import {
+  prepareEntities,
+  inhabit,
+  findSoulTarget,
+  skySunDirection,
+} from './core/embodiment.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('world');
@@ -47,8 +56,21 @@ const stepMovement = createMovementStepper();
 
 const v = new THREE.Vector3(),
   target = new THREE.Vector3(),
-  desired = new THREE.Vector3();
-let active = 0,
+  desired = new THREE.Vector3(),
+  lookTarget = new THREE.Vector3(),
+  projectedSoul = new THREE.Vector3(),
+  viewDirection = new THREE.Vector3();
+const ripple = $('soul-ripple');
+let soulTarget = null,
+  soulReadyAt = 0;
+const solarPortal = { name: '太阳', portal: 3, solar: true };
+function clearSoulTarget() {
+  soulTarget = null;
+  ripple.classList.add('hidden');
+  delete canvas.dataset.soulTarget;
+}
+let active =
+    new URLSearchParams(location.search).get('world') === 'island' ? 2 : 0,
   started = false,
   switching = false,
   yaw = 0.22,
@@ -61,6 +83,14 @@ let active = 0,
 let lastTalk = -30,
   talkUntil = -1,
   toastUntil = 0;
+// The grass layer's spoken sensations, shown in a bubble above the speaker.
+const FEELING_SECONDS = 7.5;
+const feelingBox = $('feeling');
+const feelingPoint = new THREE.Vector3();
+const recentFeelings = [];
+let feeling = null,
+  nextFeeling = 0,
+  lastSelfFeeling = -10;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const actionContext = {
   dt: 0,
@@ -72,34 +102,69 @@ const { builders, rand, microHeight, groundHeight, windUniform } =
   createWorldFactory(renderer);
 
 function getWorld(index) {
-  if (!worlds[index]) worlds[index] = builders[index]();
+  if (!worlds[index]) {
+    worlds[index] = builders[index]();
+    prepareEntities(
+      worlds[index],
+      index === 0 ? microHeight : index === 1 ? groundHeight : () => 0,
+    );
+  }
   return worlds[index];
 }
 function updateUI() {
   const d = descriptions[active];
-  $('world-name').textContent = d.name;
+  const world = getWorld(active);
+  const entity = world.controlled;
+  $('world-name').textContent = entity.name;
   $('chapter').textContent = d.chapter;
   $('world-description').textContent = d.description;
-  $('scale-value').textContent = d.scale;
+  $('scale-value').textContent = entity.scale;
   document.body.dataset.world = active;
   document.querySelectorAll('[data-world]').forEach((b) => {
     const on = +b.dataset.world === active;
     b.classList.toggle('active', on);
     b.setAttribute('aria-pressed', on);
   });
-  $('companions').classList.toggle('hidden', active !== 0);
-  $('companion-count').textContent = getWorld(0).followers.length;
+  $('companions').classList.toggle('hidden', active !== 0 && active !== 2);
+  $('senses').classList.toggle(
+    'hidden',
+    active !== 0 || !started || entity.kind !== 'grass',
+  );
+  $('companion-count').textContent = world.followers.length;
+  if (active === 0) updateSenses();
+}
+function setMeter(id, value) {
+  const percent = Math.round(value * 100);
+  $(id).style.setProperty('--level', `${percent}%`);
+  $(id).setAttribute('aria-valuenow', percent);
+}
+function updateSenses() {
+  const env = getWorld(0).environment.state;
+  $('sense-weather').textContent = env.label;
+  $('sense-warmth').textContent = `${Math.round(env.temperature)}°C`;
+  setMeter('meter-sun', env.sun);
+  setMeter('meter-water', env.moisture);
+  setMeter('meter-photo', env.photosynthesis);
+  $('sense-height').textContent = `${heightCm(env).toFixed(1)} 厘米`;
 }
 async function switchWorld(index) {
   if (index === active || switching || !started) return;
+  clearSoulTarget();
   switching = true;
   keys.clear();
+  hideFeeling();
   $('encounter').classList.remove('visible');
   $('invite').classList.add('hidden');
   $('veil').classList.add('covered');
   await new Promise((r) => setTimeout(r, reduced ? 20 : 480));
   try {
-    getWorld(index);
+    const w = getWorld(index);
+    if (w.avatarReady && !w.avatarNotified) {
+      w.avatarNotified = true;
+      w.avatarReady.then((ok) => {
+        if (!ok) toast('人物模型未能加载，场景仍可探索。');
+      });
+    }
     active = index;
     zoom = 1;
     pitch = index === 2 ? 0.39 : index === 3 ? 0.13 : 0.34;
@@ -120,35 +185,39 @@ async function switchWorld(index) {
 }
 function placeCamera(immediate = false) {
   const w = getWorld(active),
-    d = descriptions[active],
+    d = w.controlled,
     p = w.position;
-  const h =
-    active === 0
-      ? microHeight(p.x, p.z)
-      : active === 1
-        ? groundHeight(p.x, p.z)
-        : 0;
-  w.avatar.position.set(p.x, h, p.z);
-  target.set(p.x, h + d.height, p.z);
+  if (d.ground) p.y = d.ground(p.x, p.z);
+  target.set(p.x, p.y + d.height, p.z);
   const distance = d.distance * zoom;
   desired.set(
     target.x + Math.sin(yaw) * Math.cos(pitch) * distance,
-    target.y + Math.sin(pitch) * distance,
+    target.y + Math.max(0.04, Math.sin(pitch)) * distance,
     target.z + Math.cos(yaw) * Math.cos(pitch) * distance,
   );
-  if (active < 2) {
-    const ground = active === 0 ? microHeight : groundHeight;
+  if (d.ground || d.mode === 'fly') {
+    const ground =
+      active === 0
+        ? microHeight
+        : active === 1
+          ? groundHeight
+          : w.coastHeight || (() => 0);
     desired.y = Math.max(
       desired.y,
       ground(desired.x, desired.z) + (active === 0 ? 0.22 : 0.5),
     );
   }
+  // Looking up moves the gaze rather than pushing the camera into the ground.
+  if (pitch < 0) target.y += -Math.sin(pitch) * distance * 1.8;
   camera.near = active === 0 ? 0.025 : 0.1;
   camera.far = 3500;
   camera.updateProjectionMatrix();
   if (immediate) camera.position.copy(desired);
   else camera.position.lerp(desired, 0.085);
-  camera.lookAt(target);
+  if (immediate) lookTarget.copy(target);
+  else lookTarget.lerp(target, reduced ? 1 : 0.1);
+  camera.lookAt(lookTarget);
+  camera.updateMatrixWorld();
   if (w.sky) w.sky.position.copy(camera.position);
 }
 function toast(text) {
@@ -157,6 +226,7 @@ function toast(text) {
   toastUntil = time + 4;
 }
 function say(talker) {
+  hideFeeling();
   const line = talker.lines[Math.floor(rand(0, talker.lines.length))];
   $('speaker').textContent = talker.name + ' · 低语';
   $('thought').textContent = line[0];
@@ -166,31 +236,105 @@ function say(talker) {
   talkUntil = time + 8.5;
 }
 function recruit() {
-  refreshPrimaryAction();
-  const w = getWorld(0);
-  if (active !== 0 || !nearGrass || !started || switching) return;
+  const w = getWorld(active);
+  if (!nearGrass || !started || switching || !canPlay()) return;
   if (w.followers.length >= 12) {
     toast('已经有 12 位同行者。');
     return;
   }
   nearGrass.joined = true;
   w.followers.push(nearGrass);
-  $('companion-count').textContent = w.followers.length;
-  toast(
-    w.followers.length === 1
-      ? '现在，风有了两个方向。'
-      : `${w.followers.length} 株草，与你一起经过世界。`,
-  );
+  w.followLeader = w.controlled;
+  updateUI();
+  toast(`${w.followers.length} 位同行者，与你一起经过世界。`);
   nearGrass = null;
   refreshPrimaryAction();
 }
+function canPlay() {
+  return $('help-panel').classList.contains('hidden');
+}
+function projectEntity(entity) {
+  entity.object.getWorldPosition(projectedSoul);
+  projectedSoul.y += entity.focusHeight ?? entity.height;
+  // A submerged animal is signalled at the water surface when seen from above.
+  if (active === 2 && entity.kind === 'fish' && camera.position.y > 0)
+    projectedSoul.y = 1;
+  return projectedSoul.project(camera);
+}
+function updateSoulTarget() {
+  if (!started || switching || !canPlay() || time < soulReadyAt) {
+    clearSoulTarget();
+    return;
+  }
+  const world = getWorld(active);
+  let candidate = findSoulTarget(world, projectEntity, soulTarget);
+  const sunDirection = skySunDirection(world);
+  if (sunDirection && world.controlled.mode !== 'swim') {
+    camera.getWorldDirection(viewDirection);
+    if (viewDirection.dot(sunDirection) > 0.982) candidate = solarPortal;
+  }
+  if (!candidate) {
+    clearSoulTarget();
+    return;
+  }
+  if (candidate.solar) {
+    projectedSoul
+      .copy(sunDirection)
+      .multiplyScalar(1000)
+      .add(camera.position)
+      .project(camera);
+  } else projectEntity(candidate);
+  soulTarget = candidate;
+  ripple.style.left = `${(projectedSoul.x * 0.5 + 0.5) * innerWidth}px`;
+  ripple.style.top = `${(-projectedSoul.y * 0.5 + 0.5) * innerHeight}px`;
+  ripple.setAttribute('aria-label', `魂穿：${candidate.name}`);
+  ripple.style.color = candidate.solar ? '#354648' : '';
+  ripple.classList.remove('hidden');
+  canvas.dataset.soulTarget = candidate.name;
+}
+function become(entity) {
+  const world = getWorld(active);
+  if (!inhabit(world, entity)) return;
+  clearSoulTarget();
+  keys.clear();
+  drag = null;
+  nearGrass = null;
+  hideFeeling();
+  $('invite').classList.add('hidden');
+  zoom = 1;
+  pitch = entity.mode === 'swim' ? 0.12 : 0.32;
+  $('encounter').classList.remove('visible');
+  lastTalk = time;
+  soulReadyAt = time + 1.2;
+  document.body.classList.add('soul-shift');
+  setTimeout(
+    () => document.body.classList.remove('soul-shift'),
+    reduced ? 0 : 800,
+  );
+  updateUI();
+  canvas.focus({ preventScroll: true });
+}
+async function possessNearby() {
+  if (!started || switching || !canPlay() || time < soulReadyAt) return;
+  updateSoulTarget();
+  const entity = soulTarget;
+  if (!entity) return;
+  if (entity.portal !== undefined) {
+    await switchWorld(entity.portal);
+    if (entity.solar && active === 3)
+      become(getWorld(3).entities.find((entry) => entry.kind === 'sun'));
+    else if (active === entity.portal) become(getWorld(active).original);
+  } else become(entity);
+}
+ripple.onclick = possessNearby;
+
 function encounter() {
-  if (!started || switching) return;
+  if (!started || switching || !canPlay()) return;
   const w = getWorld(active);
   if (time - lastTalk > 19) {
     const candidates = w.talkers.filter((t) => {
       t.object.getWorldPosition(v);
-      return v.distanceTo(w.avatar.position) < t.range;
+      return t.object !== w.avatar && v.distanceTo(w.avatar.position) < t.range;
     });
     if (candidates.length)
       say(candidates[Math.floor(rand(0, candidates.length))]);
@@ -206,7 +350,7 @@ function refreshActionContext(dt = 0) {
   );
   movementInput.refresh(
     actionContext,
-    descriptions[active].limit,
+    getWorld(active).controlled.limit,
     getWorld(active),
   );
   actionContext.stepId = frame;
@@ -215,10 +359,14 @@ function refreshPrimaryAction() {
   refreshActionContext();
   const w = getWorld(active);
   nearGrass = null;
-  if (actionContext.canInteract && active === 0 && w.followers.length < 12) {
-    let closest = 3;
+  if (
+    actionContext.canInteract &&
+    ['grass', 'island'].includes(w.controlled.kind) &&
+    w.followers.length < 12
+  ) {
+    let closest = active === 2 ? 110 : 3;
     for (const p of w.recruitables) {
-      if (p.joined) continue;
+      if (p.joined || p.object === w.avatar) continue;
       const dist = p.object.position.distanceTo(w.avatar.position);
       if (dist < closest) {
         nearGrass = p;
@@ -231,6 +379,105 @@ function refreshPrimaryAction() {
     $('invite-label'),
     primaryActionLabel(active, w, actionContext, nearGrass),
   );
+  if (active === 0 && w.controlled.kind === 'grass') senseFeelings(w);
+}
+
+function feelFor(species = null) {
+  const w = getWorld(0);
+  return chooseFeeling(w.environment.state, {
+    topics: feelingTopics,
+    species,
+    followers: w.followers.length,
+    recent: recentFeelings,
+    random: () => rand(0, 1),
+  });
+}
+function showFeeling(target, speaker, choice, lift) {
+  $('feeling-speaker').textContent = speaker;
+  $('feeling-text').textContent = choice.text;
+  $('feeling-source').textContent = choice.source;
+  feelingBox.classList.add('visible');
+  feeling = { target, lift, until: time + FEELING_SECONDS };
+  recentFeelings.push(choice.key);
+  if (recentFeelings.length > 8) recentFeelings.shift();
+  nextFeeling = time + rand(22, 34);
+  positionFeeling();
+}
+function hideFeeling() {
+  feeling = null;
+  feelingBox.classList.remove('visible');
+}
+function feelSelf(speaker = '你 · 此刻的感受', choice = feelFor()) {
+  const avatar = getWorld(0).avatar;
+  lastSelfFeeling = time;
+  showFeeling(avatar, speaker, choice, 1.15 * avatar.scale.y);
+}
+function feelPlant(plant, role) {
+  showFeeling(
+    plant.object,
+    `${plant.species.name} · ${role}`,
+    feelFor(plant.species),
+    1.25 * plant.object.scale.y,
+  );
+}
+function listenToSelf() {
+  if (
+    active !== 0 ||
+    !started ||
+    switching ||
+    !canPlay() ||
+    getWorld(0).controlled.kind !== 'grass'
+  )
+    return;
+  if (time - lastSelfFeeling < 2.5) return;
+  feelSelf();
+}
+// Priority: a weather change, then a newly met plant, then an idle thought
+// from you or one of your companions. The encounter panel always goes first.
+function senseFeelings(w) {
+  if (!started || switching || time < talkUntil) return;
+  if (w.weatherEvent) {
+    const lines = weatherArrivals[w.weatherEvent];
+    w.weatherEvent = null;
+    const [text, source] = lines[Math.floor(rand(0, lines.length))];
+    feelSelf(`你 · ${w.environment.state.label}`, { text, source, key: text });
+    return;
+  }
+  if (feeling) return;
+  if (nearGrass && time - (nearGrass.lastFelt ?? -Infinity) > 40) {
+    nearGrass.lastFelt = time;
+    feelPlant(nearGrass, '它的感受');
+    return;
+  }
+  if (time < nextFeeling) return;
+  if (w.followers.length && rand(0, 1) < 0.4)
+    feelPlant(w.followers[Math.floor(rand(0, w.followers.length))], '同行者');
+  else feelSelf();
+}
+function positionFeeling() {
+  if (!feeling) return;
+  camera.updateMatrixWorld();
+  feeling.target.getWorldPosition(feelingPoint);
+  feelingPoint.y += feeling.lift;
+  feelingPoint.project(camera);
+  const offscreen =
+    feelingPoint.z > 1 ||
+    Math.abs(feelingPoint.x) > 1.1 ||
+    Math.abs(feelingPoint.y) > 1.1;
+  feelingBox.classList.toggle('offscreen', offscreen);
+  if (offscreen) return;
+  const x = Math.min(
+    innerWidth - 150,
+    Math.max(150, (feelingPoint.x * 0.5 + 0.5) * innerWidth),
+  );
+  const y = Math.min(
+    innerHeight - 200,
+    Math.max(
+      feelingBox.offsetHeight + 150,
+      (-feelingPoint.y * 0.5 + 0.5) * innerHeight,
+    ),
+  );
+  feelingBox.style.transform = `translate(${x}px, ${y}px) translate(-50%, -100%)`;
 }
 
 let audio = null;
@@ -316,11 +563,14 @@ $('begin').onclick = () => {
   $('welcome').style.pointerEvents = 'none';
   setTimeout(() => $('welcome').classList.add('hidden'), 1000);
   lastTalk = time - 12;
+  nextFeeling = time + 14;
+  updateUI();
   toggleAudio();
-  toast('按住鼠标拖动观察，W A S D 自由移动。');
+  canvas.focus({ preventScroll: true });
 };
 $('sound').onclick = toggleAudio;
 $('help').onclick = () => {
+  clearSoulTarget();
   keys.clear();
   $('help-panel').classList.remove('hidden');
   refreshPrimaryAction();
@@ -334,10 +584,16 @@ function closeHelp() {
 $('close-help').onclick = closeHelp;
 addEventListener('keydown', (e) => {
   if (e.code === 'Escape') {
-    closeHelp();
+    if (!canPlay()) closeHelp();
     return;
   }
   if (!started || !$('help-panel').classList.contains('hidden')) return;
+  if (e.code === 'KeyR' && !e.repeat) {
+    e.preventDefault();
+    possessNearby();
+    return;
+  }
+  if (!canPlay()) return;
   if (
     [
       'KeyW',
@@ -367,6 +623,7 @@ addEventListener('keydown', (e) => {
     if (feedback) toast(feedback);
     refreshPrimaryAction();
   }
+  if (e.code === 'KeyF' && !e.repeat) listenToSelf();
 });
 addEventListener('keyup', (e) => movementInput.keyup(e.code));
 addEventListener('blur', () => {
@@ -374,7 +631,7 @@ addEventListener('blur', () => {
   drag = null;
 });
 canvas.addEventListener('pointerdown', (e) => {
-  if (!started || switching) return;
+  if (!started || switching || !canPlay()) return;
   drag = { x: e.clientX, y: e.clientY };
   canvas.setPointerCapture(e.pointerId);
   canvas.style.cursor = 'grabbing';
@@ -382,7 +639,7 @@ canvas.addEventListener('pointerdown', (e) => {
 canvas.addEventListener('pointermove', (e) => {
   if (!drag) return;
   yaw -= (e.clientX - drag.x) * 0.005;
-  pitch = Math.max(0.04, Math.min(1.15, pitch + (e.clientY - drag.y) * 0.004));
+  pitch = Math.max(-0.9, Math.min(1.15, pitch + (e.clientY - drag.y) * 0.004));
   drag = { x: e.clientX, y: e.clientY };
 });
 canvas.addEventListener('pointerup', () => {
@@ -395,7 +652,7 @@ canvas.addEventListener('pointercancel', () => {
 canvas.addEventListener(
   'wheel',
   (e) => {
-    if (!started) return;
+    if (!started || switching || !canPlay()) return;
     e.preventDefault();
     zoom = Math.max(0.55, Math.min(2.4, zoom + e.deltaY * 0.001));
   },
@@ -413,69 +670,115 @@ function animate() {
   frame++;
   windUniform.value = reduced ? 0 : time;
   const w = getWorld(active),
-    d = descriptions[active];
+    d = w.controlled;
   refreshActionContext(dt);
+  const previousX = w.position.x,
+    previousZ = w.position.z;
   const movement = stepMovement(w, d, yaw, keys, actionContext);
   const moving = movement.moving;
-  if (moving && active < 2) {
+  if (actionContext.canSimulate && d.mode) {
+    const vertical =
+      (keys.has('Space') ? 1 : 0) -
+      (keys.has('ShiftLeft') || keys.has('ShiftRight') ? 1 : 0);
+    w.position.y += vertical * d.speed * 0.55 * dt;
+    if (d.mode === 'fly')
+      w.position.y = THREE.MathUtils.clamp(
+        w.position.y,
+        Math.max(4, w.coastHeight(w.position.x, w.position.z) + 3),
+        160,
+      );
+    if (d.mode === 'swim')
+      w.position.y = THREE.MathUtils.clamp(
+        w.position.y,
+        w.seabedHeight(w.position.x, w.position.z) + 1.3,
+        -0.8,
+      );
+  }
+  if (
+    moving &&
+    d.mode === 'swim' &&
+    w.seabedHeight(w.position.x, w.position.z) > -2.5
+  ) {
+    w.position.x = previousX;
+    w.position.z = previousZ;
+  }
+  if (moving && (active < 2 || d.mode)) {
     const angle = Math.atan2(-movement.directionX, -movement.directionZ);
     let delta = angle - w.avatar.rotation.y;
     delta = Math.atan2(Math.sin(delta), Math.cos(delta));
     w.avatar.rotation.y += delta * 0.14;
   }
-  w.update?.(actionContext);
+  if (w.earthActions) w.update(actionContext);
+  else w.update?.(dt, time, reduced);
   movementInput.finishStep(w);
-  if (active === 0) {
-    w.avatar.rotation.z =
-      Math.sin(time * 1.6) * 0.035 + (moving ? Math.sin(time * 8) * 0.04 : 0);
+  if (d.kind === 'grass' || d.kind === 'flower') {
+    w.avatar.rotation.z = reduced
+      ? 0
+      : Math.sin(time * 1.6) * 0.035 + (moving ? Math.sin(time * 8) * 0.04 : 0);
+  }
+  if (active === 0 || active === 2) {
+    const leader = w.followLeader.object.position;
     w.followers.forEach((p, i) => {
       const angle = i * 2.399,
-        rad = 1.2 + Math.sqrt(i) * 0.64;
-      const tx = w.position.x + Math.sin(angle) * rad,
-        tz = w.position.z + Math.cos(angle) * rad;
-      p.object.position.x += (tx - p.object.position.x) * Math.min(1, dt * 2);
-      p.object.position.z += (tz - p.object.position.z) * Math.min(1, dt * 2);
-      p.object.position.y = microHeight(
+        radius =
+          active === 2 ? 100 + Math.sqrt(i) * 65 : 1.2 + Math.sqrt(i) * 0.64;
+      const tx = leader.x + Math.sin(angle) * radius,
+        tz = leader.z + Math.cos(angle) * radius;
+      p.object.position.x +=
+        (tx - p.object.position.x) *
+        Math.min(1, dt * (active === 2 ? 0.45 : 2));
+      p.object.position.z +=
+        (tz - p.object.position.z) *
+        Math.min(1, dt * (active === 2 ? 0.45 : 2));
+      p.object.position.y = p.entity.ground(
         p.object.position.x,
         p.object.position.z,
       );
-      p.object.rotation.z = Math.sin(time * 1.7 + p.phase) * 0.08;
-    });
-    w.recruitables.forEach((p) => {
-      if (!p.joined)
-        p.object.rotation.z = Math.sin(time * 1.5 + p.phase) * 0.05;
+      if (active === 0)
+        p.object.rotation.z = reduced
+          ? 0
+          : Math.sin(time * 1.7 + p.phase) * 0.08;
     });
   }
-  if (active === 1) {
-    w.avatar.userData.limbs.forEach((limb, i) => {
-      limb.rotation.x = moving
-        ? Math.sin(time * 8 + (i < 2 ? 0 : Math.PI)) * 0.48
-        : Math.sin(time * 1.2) * 0.02;
-    });
-    if (w.sun) {
-      w.sun.position.set(w.position.x - 60, 58, w.position.z - 75);
-      w.sun.target.position.copy(w.avatar.position);
-    }
+  if (d.kind === 'human') {
+    // 模型没有骨骼：用整体起伏、前倾和左右摆动表现步行与呼吸。
+    const body = w.avatar.userData.body;
+    body.position.y = moving
+      ? Math.abs(Math.sin(time * 8)) * 0.05
+      : Math.sin(time * 1.2) * 0.008;
+    body.rotation.z = moving ? Math.sin(time * 8) * 0.03 : 0;
+    body.rotation.x += ((moving ? -0.07 : 0) - body.rotation.x) * 0.1;
   }
-  if (active === 2) {
-    w.avatar.rotation.y += dt * 0.008;
-    w.avatar.rotation.z = reduced ? 0 : Math.sin(time * 0.24) * 0.003;
+  if (active === 1 && w.sun) {
+    w.sun.position.set(w.position.x - 60, 58, w.position.z - 75);
+    w.sun.target.position.copy(w.avatar.position);
   }
   if (w.particles && !reduced) w.particles.rotation.y = time * 0.003;
   placeCamera();
+  updateSoulTarget();
   refreshPrimaryAction();
   if (frame % 12 === 0) encounter();
+  if (feeling) {
+    if (time > feeling.until) hideFeeling();
+    else positionFeeling();
+  }
+  if (active === 0 && started && frame % 30 === 0) updateSenses();
   if (time > talkUntil) $('encounter').classList.remove('visible');
   if (time > toastUntil) $('toast').classList.remove('visible');
   renderer.render(w.scene, camera);
   if (frame % 30 === 0) {
     canvas.dataset.position = `${w.position.x.toFixed(2)},${w.position.z.toFixed(2)}`;
-    canvas.dataset.followers = worlds[0].followers.length;
+    canvas.dataset.followers = w.followers.length;
+    canvas.dataset.entity = w.controlled.kind;
+    canvas.dataset.altitude = w.position.y.toFixed(2);
+    if (w.environment) canvas.dataset.weather = w.environment.state.weather;
     canvas.dataset.drawcalls = renderer.info.render.calls;
+    canvas.dataset.avatar = w.avatarState ?? 'built-in';
+    if (w.weather) canvas.dataset.weather = w.weather;
   }
 }
 try {
-  getWorld(0);
+  getWorld(active);
   updateUI();
   placeCamera(true);
   $('loading').classList.add('hidden');

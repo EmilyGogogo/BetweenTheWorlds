@@ -15,7 +15,13 @@ const existing = await lstat(output).catch((error) => {
 if (existing?.isSymbolicLink()) throw new Error('dist must not be a symlink.');
 await rm(output, { recursive: true, force: true });
 await mkdir(output);
-for (const entry of ['index.html', 'src', 'vendor', 'THIRD_PARTY_NOTICES.md']) {
+for (const entry of [
+  'index.html',
+  'src',
+  'assets',
+  'vendor',
+  'THIRD_PARTY_NOTICES.md',
+]) {
   await cp(resolve(root, entry), resolve(output, entry), { recursive: true });
 }
 console.log('Static site written to dist/. Third-party licenses included.');

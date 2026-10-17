@@ -2,19 +2,26 @@
 
 ## 运行方式
 
-浏览器直接加载静态 HTML、CSS 和 ES Modules，不需要应用框架、后端或打包器。Three.js r170 从原始 HTML 的内嵌模块按字节提取到 `vendor/`，本次未升级引擎。Node.js 仅用于本地服务、检查、测试和静态发布目录生成。
+浏览器直接加载静态 HTML、CSS 和 ES Modules，不需要应用框架、后端或打包器。Three.js r170 从原始 HTML 的内嵌模块按字节提取到 `vendor/`，本次未升级引擎；同版本的 glTF 加载器原件放在 `vendor/examples/jsm/`，它的 `three` 裸导入由 `index.html` 中的 import map 解析到同一个引擎文件。Node.js 仅用于本地服务、检查、测试和静态发布目录生成。
 
 ```text
 index.html                 语义结构、入口与操作提示
 src/main.js                会话状态、输入、切换、镜头、对白触发、音频与动画循环
 src/styles.css             现有界面样式与响应式布局
 src/content/worlds.js      四层名称、尺度、镜头与移动参数
+src/content/grass-feelings.js  草的感受、天气转变时的句子与可邀请的草种
 src/core/random.js         可复现的随机数生成器
 src/core/world-movement.js 输入中止锁存、正常位移、影响校验/夹取及实际反馈
 src/core/world-actions.js  主动作分派、共享允许条件与提示 DOM 适配
+src/core/grass-environment.js  草层天气、温度、土壤湿度、光合作用与生长（纯逻辑）
+src/core/feelings.js       按当前感知挑选感受句子（纯逻辑）
+src/core/embodiment.js     实体登记、魂穿、候选选择与受控身体引用
 src/worlds/index.js        场景工厂装配
 src/worlds/shared.js       地形、植被、光照、天空与共用渲染工具
-src/worlds/micro.js        草层
+src/worlds/micro.js        草层：场景组装、天气对光照/天空/湿土/雨的影响
+src/worlds/micro-flora.js  草层植物、土壤、露珠与摆动/透光着色器
+src/worlds/micro-fauna.js  草层的蚂蚁群落、瓢虫、步甲、毛毛虫、蚱蜢、蝴蝶、蜜蜂、食蚜蝇、蜻蜓、蜗牛、蚯蚓与蛛网
+src/worlds/micro-trees.js  草层边缘的巨树（橡树、白桦、松树）、草甸里的树苗与灌木、落果
 src/worlds/human.js        人层
 src/worlds/island.js       岛屿层
 src/worlds/space.js        星球层
@@ -22,6 +29,7 @@ src/worlds/earth-moon.js   现有月亮的邀请、两态和局部轨道
 src/worlds/earth-sun.js    太阳距离光照、回应/冷却、启停恢复
 src/worlds/earth-ringed-planet.js 原有环星球的有限牵引、冷却与星环反馈
 src/worlds/earth-actions.js Earth 局部主动作选择与一次更新组合
+assets/                    运行时加载的媒体资源及其来源登记
 vendor/                    保持原件的引擎与第三方许可
 prototypes/                原始附件及 SHA-256 清单
 scripts/                   受限静态服务与发布复制脚本
@@ -34,7 +42,7 @@ docs/                      方向、任务、验证、维护与决策
 
 `createWorldFactory(renderer)` 为本次会话创建共享工具与四个 builder；每个 builder 返回自己的场景状态。层顺序固定为草、人、岛屿、星球，与 `descriptions`、按钮索引和快捷键一致。改动顺序需要同步这些调用方与测试。
 
-场景状态包含 `scene`、`position`、`avatar`、`talkers`、`followers`、`recruitables`。对白实体包含 `object`、`range`、`name`、`lines`，每条 `lines` 记录正文与来源说明。层特有数据由所属模块创建，主循环只更新实际需要的部分。
+场景状态包含 `scene`、`position`、`avatar`、`talkers`、`followers`、`recruitables`。人层的 `avatar` 是一个空组，模型在会话开始时预加载并挂到 `avatar.userData.body` 上；`avatarState` 取 `loading`、`ready` 或 `failed`，主控制器据此提示加载失败并把状态写到画布的 `data-avatar`。对白实体包含 `object`、`range`、`name`、`lines`，每条 `lines` 记录正文与来源说明。层特有数据由所属模块创建，主循环只更新实际需要的部分。场景状态可以提供可选的 `update(dt, time, reduced)`，主循环只对当前层调用；草层用它推进天气、昆虫和生长，离开草层时这些状态暂停。草层另有 `environment`（见 `grass-environment.js`）与 `weatherEvent`（天气刚变化时的阶段名，由主控制器读取后清空），可邀请的草带有 `species`。
 
 共享工具作为参数注入四层，避免场景直接依赖主控制器。地面高度函数同时用于地形、角色和镜头，修改时三者需要一起验证。
 
@@ -78,7 +86,7 @@ V3沿用四天体/三talkers库存，保存原ringedPlanet/gas/ring引用与原�
 
 ## 当前限制
 
-场景首次使用时创建并缓存，离开不会释放 GPU 资源；刷新才完全重置。主控制器仍包含输入、音频和对白，后续按真实任务逐步拆分。场景工厂嵌套函数沿用 Demo 结构，避免一次重写引入行为偏差。
+场景首次使用时创建并缓存，离开不会释放 GPU 资源；刷新才完全重置。草层在创建时用一次 CubeCamera 拍摄 256 像素的立方体快照供露珠折射，随场景缓存，不随天气更新。草层植物按 16～64 单位的地块分组实例化：每块单独视锥剔除（含阴影），并按类型设定可见距离，离玩家更远时隐藏；昆虫在 34 单位外隐藏并停止更新。草与花使用 Lambert 材质，因为该层主要受填充率限制。主控制器仍包含输入、音频和对白，后续按真实任务逐步拆分。场景工厂嵌套函数沿用 Demo 结构，避免一次重写引入行为偏差。
 
 共享随机源为固定种子，但各层首次进入的顺序会影响随机消耗，因此不同访问顺序的场景细节可能不同。当前尚未承诺跨会话完全一致的世界。
 
@@ -95,3 +103,7 @@ V3沿用四天体/三talkers库存，保存原ringedPlanet/gas/ring引用与原�
 installEarthActions的第五参数为可选`{visualUpdate}`；旧三/四参调用保持。唯一世界update按Ringed→Moon→Sun→visualUpdate调用；Earth原0.018自转从main迁入earth-visuals，云0.020独立自转，合法dt<=0.05、canSimulate且非reducedMotion才推进。视觉不覆盖Sun大气/halo或V3 ring opacity。9张一次性CanvasTexture约9.67MiB（RGBA8+mip估算）；数据图NoColorSpace，颜色sRGB；Earth的R高度/G粗糙度复用一张图。无GPU释放新协议，仍随缓存scene存活。
 
 新增美术固定局部种子，移除旧背景的共享rand消耗会改变之后随机流位置；没有修改相遇算法/19秒冷却，也没有外部概率接口。开发手验采样服务仅在手动运行scripts/earth-visual-qa.mjs时，以内存响应插入同一RAF时间戳/renderer统计；不更改发布main、不模拟按键、不上传数据、不改生产白名单。契约见[ADR0005](decisions/0005-earth-visual-resources.md)。
+
+## 魂穿契约
+
+`src/core/embodiment.js` 在场景构建后登记默认身体、显式 entities、对白实体与可招募对象。controlled 指向当前实体，avatar 和 position 引用其物体及变换。original 保留原身体引用，返回同样要求靠近并进入视野。实体覆盖 kind、distance、height、speed、limit、scale、range 和 ground；飞行/游泳使用 mode 与空的 ground。portal 指向目标场景。followLeader 保存群体最后的同类领队，recruitables[].entity 指向对应实体。findSoulTarget 依据距离和投影选定唯一候选，main 以同一候选驱动无文字涟漪和 R；天空太阳仅在视线对准时作为跨尺度入口。场景可通过 update(dt, time, reduced) 更新环境。调用方包括 main 与四个场景，见 [魂穿决策](decisions/0002-embodiment.md) 和 [共同语言](../GLOSSARY.md)。

@@ -63,6 +63,7 @@ export function makeSpace(tools) {
     s.add(w.sky);
     w.spaceRocks = createSpaceRocks();
     s.add(w.spaceRocks);
+    w.primary = { ground: null };
     w.avatar = new THREE.Group();
     s.add(w.avatar);
     w.globe = mesh(
@@ -123,6 +124,16 @@ export function makeSpace(tools) {
       object: p,
       range: 290,
       name: '有环的星球',
+      embodiment: {
+        kind: 'planet',
+        height: 0,
+        distance: 280,
+        speed: 30,
+        range: 650,
+        limit: 1100,
+        ground: null,
+        scale: '≈ 10 万千米',
+      },
       lines: [
         ['你用距离衡量遥远，用自己衡量一切。', '原创 · 万物之间'],
         ['我们并不独立。引力一直在无声地交谈。', '原创 · 万物之间'],
@@ -149,6 +160,16 @@ export function makeSpace(tools) {
       object: moon,
       range: 75,
       name: '月亮',
+      embodiment: {
+        kind: 'moon',
+        height: 0,
+        distance: 52,
+        speed: 24,
+        range: 500,
+        limit: 1100,
+        ground: null,
+        scale: '≈ 3500 千米',
+      },
       lines: [['你以为你在独行。我的潮汐，却一直跟着你。', '原创 · 万物之间']],
     });
     const moonActions = createMoonCompanion(w, moon);
@@ -171,6 +192,21 @@ export function makeSpace(tools) {
       0.28,
       true,
     );
+    w.entities = [
+      {
+        object: sunBody,
+        name: '太阳',
+        kind: 'sun',
+        celestial: true,
+        range: 700,
+        distance: 220,
+        height: 0,
+        speed: 35,
+        limit: 1300,
+        ground: null,
+        scale: '≈ 140 万千米',
+      },
+    ];
     const sunActions = createSunResponse(w, sunBody, halo, {
       object: sunBody,
       range: sunSettings.talkRange,

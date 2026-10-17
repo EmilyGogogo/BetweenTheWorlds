@@ -24,14 +24,14 @@
 
 这是完整S0与量化性能验收所需，和日常眼检分开记录。当前没有任何真实样本，不声称相对增幅达标。
 
-旧版worktree本机已准备。新克隆没有该目录时，先运行`git worktree add --detach .local/earth-visual-baseline c97b8bb`。分别在两个终端启动（Node22，端口占用可改；保持两版窗口条件相同）：
+同步远端后，当前对照基线改为`1cacad1`：包含新草层/岛屿/R功能、未含本次视觉，以免把其他功能的成本算作美术成本。旧c97b8bb快照仅留历史。新基线目录不存在时运行`git worktree add --detach .local/earth-visual-baseline-1cacad1 1cacad1`。分别在两个终端启动（Node22，端口占用可改；保持两版窗口条件相同）：
 
 ```sh
 node scripts/earth-visual-qa.mjs --baseline --port=5174
 node scripts/earth-visual-qa.mjs --port=5173
 ```
 
-- 旧版：`http://127.0.0.1:5174`，冻结在c97b8bb升级前代码。
+- 旧版：`http://127.0.0.1:5174`，冻结在1cacad1合入远端功能后的升级前代码。
 - 新版：`http://127.0.0.1:5173`，当前视觉；两版使用同一手动采样工具。此工具只存在于开发QA服务，不进入生产页面。
 - 不用软件WebGL、模拟时钟、强制GC或开着DevTools性能录制的诊断会话。使用普通硬件加速浏览器；写明浏览器完整版本/渲染后端、设备/CPU/GPU/内存、刷新率、窗口尺寸、DPR、Reduce Motion、音频、电源状态。未知项写未知，完整验收前补齐。面板环境JSON填实际device、cpu、gpu、memoryGiB（数字）、os、browserVersion、refreshHz（数字）、power、hardwareAcceleration（核实后true）；unknown可保存原始记录，但统计工具会拒绝把缺环境证据的样本判Pass。JSON自动包含视口/DPR等可读字段和实际renderer计数。
 
