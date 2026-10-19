@@ -20,6 +20,7 @@ import {
   findSoulTarget,
   skySunDirection,
 } from './core/embodiment.js';
+import { createFieldwork } from './fieldwork.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('world');
@@ -112,6 +113,19 @@ function getWorld(index) {
   }
   return worlds[index];
 }
+const fieldwork = createFieldwork({
+  getWorld: () => getWorld(1),
+  camera,
+  canvas,
+  toast,
+  clearInput: () => {
+    keys.clear();
+    drag = null;
+  },
+  reduced,
+  limit: descriptions[1].limit,
+});
+const sneaking = () => keys.has('ShiftLeft') || keys.has('ShiftRight');
 function updateUI() {
   const d = descriptions[active];
   const world = getWorld(active);
@@ -132,6 +146,7 @@ function updateUI() {
     active !== 0 || !started || entity.kind !== 'grass',
   );
   $('companion-count').textContent = world.followers.length;
+  fieldwork.setVisible(active === 1 && entity.kind === 'human');
   if (active === 0) updateSenses();
 }
 function setMeter(id, value) {
@@ -189,6 +204,14 @@ function placeCamera(immediate = false) {
     d = w.controlled,
     p = w.position;
   if (d.ground) p.y = d.ground(p.x, p.z);
+  if (
+    active === 1 &&
+    d.kind === 'human' &&
+    fieldwork.placeCamera(w, yaw, zoom, immediate)
+  ) {
+    if (w.sky) w.sky.position.copy(camera.position);
+    return;
+  }
   target.set(p.x, p.y + d.height, p.z);
   const distance = d.distance * zoom;
   desired.set(
@@ -212,6 +235,7 @@ function placeCamera(immediate = false) {
   if (pitch < 0) target.y += -Math.sin(pitch) * distance * 1.8;
   camera.near = active === 0 ? 0.025 : 0.1;
   camera.far = 3500;
+  camera.fov = 52;
   camera.updateProjectionMatrix();
   if (immediate) camera.position.copy(desired);
   else camera.position.lerp(desired, 0.085);
@@ -252,7 +276,9 @@ function recruit() {
   refreshPrimaryAction();
 }
 function canPlay() {
-  return $('help-panel').classList.contains('hidden');
+  return (
+    $('help-panel').classList.contains('hidden') && !fieldwork.isBlocking()
+  );
 }
 function projectEntity(entity) {
   entity.object.getWorldPosition(projectedSoul);
@@ -295,7 +321,9 @@ function updateSoulTarget() {
 }
 function become(entity) {
   const world = getWorld(active);
+  const previous = world.avatar;
   if (!inhabit(world, entity)) return;
+  previous.visible = true;
   clearSoulTarget();
   keys.clear();
   drag = null;
@@ -342,13 +370,7 @@ function encounter() {
   }
 }
 function refreshActionContext(dt = 0) {
-  updateActionContext(
-    actionContext,
-    started,
-    switching,
-    !$('help-panel').classList.contains('hidden'),
-    dt,
-  );
+  updateActionContext(actionContext, started, switching, !canPlay(), dt);
   movementInput.refresh(
     actionContext,
     getWorld(active).controlled.limit,
@@ -585,10 +607,15 @@ function closeHelp() {
 $('close-help').onclick = closeHelp;
 addEventListener('keydown', (e) => {
   if (e.code === 'Escape') {
-    if (!canPlay()) closeHelp();
+    if (!fieldwork.closePanel()) closeHelp();
     return;
   }
   if (!started || !$('help-panel').classList.contains('hidden')) return;
+  // 人物面板打开时，方向键与空格交给面板里的按钮。
+  if (fieldwork.isBlocking()) {
+    if (e.code === 'KeyC' && !e.repeat) fieldwork.closePanel();
+    return;
+  }
   if (e.code === 'KeyR' && !e.repeat) {
     e.preventDefault();
     possessNearby();
@@ -624,6 +651,13 @@ addEventListener('keydown', (e) => {
     if (feedback) toast(feedback);
     refreshPrimaryAction();
   }
+  if (
+    active === 1 &&
+    getWorld(1).controlled.kind === 'human' &&
+    !switching &&
+    !e.repeat
+  )
+    fieldwork.handleKey(e.code, yaw);
   if (e.code === 'KeyF' && !e.repeat) listenToSelf();
 });
 addEventListener('keyup', (e) => movementInput.keyup(e.code));
@@ -640,7 +674,13 @@ canvas.addEventListener('pointerdown', (e) => {
 canvas.addEventListener('pointermove', (e) => {
   if (!drag) return;
   yaw -= (e.clientX - drag.x) * 0.005;
-  pitch = Math.max(-0.9, Math.min(1.15, pitch + (e.clientY - drag.y) * 0.004));
+  const dy = e.clientY - drag.y;
+  if (!(
+    active === 1 &&
+    getWorld(1).controlled.kind === 'human' &&
+    fieldwork.lookVertical(dy)
+  ))
+    pitch = Math.max(-0.9, Math.min(1.15, pitch + dy * 0.004));
   drag = { x: e.clientX, y: e.clientY };
 });
 canvas.addEventListener('pointerup', () => {
@@ -675,7 +715,14 @@ function animate() {
   refreshActionContext(dt);
   const previousX = w.position.x,
     previousZ = w.position.z;
-  const movement = stepMovement(w, d, yaw, keys, actionContext);
+  const movement = stepMovement(
+    w,
+    d,
+    yaw,
+    keys,
+    actionContext,
+    active === 1 && d.kind === 'human' ? fieldwork.speedScale(sneaking()) : 1,
+  );
   const moving = movement.moving;
   if (actionContext.canSimulate && d.mode) {
     const vertical =
@@ -742,18 +789,33 @@ function animate() {
     });
   }
   if (d.kind === 'human') {
-    // 模型没有骨骼：用整体起伏、前倾和左右摆动表现步行与呼吸。
     const body = w.avatar.userData.body;
-    body.position.y = moving
-      ? Math.abs(Math.sin(time * 8)) * 0.05
-      : Math.sin(time * 1.2) * 0.008;
-    body.rotation.z = moving ? Math.sin(time * 8) * 0.03 : 0;
-    body.rotation.x += ((moving ? -0.07 : 0) - body.rotation.x) * 0.1;
+    if (body) {
+      // The glTF avatar has no skeleton; the other characters retain joint animation.
+      body.position.y = reduced
+        ? 0
+        : moving
+          ? Math.abs(Math.sin(time * 8)) * 0.05
+          : Math.sin(time * 1.2) * 0.008;
+      body.rotation.z = !reduced && moving ? Math.sin(time * 8) * 0.03 : 0;
+      body.rotation.x +=
+        ((moving && !reduced ? -0.07 : 0) - body.rotation.x) * 0.1;
+    } else {
+      w.avatar.userData.limbs.forEach((limb, index) => {
+        limb.rotation.x = moving
+          ? Math.sin(time * 8 + (index < 2 ? 0 : Math.PI)) * 0.48
+          : reduced
+            ? 0
+            : Math.sin(time * 1.2) * 0.02;
+      });
+    }
   }
   if (active === 1 && w.sun) {
-    w.sun.position.set(w.position.x - 60, 58, w.position.z - 75);
+    w.sun.position.copy(w.avatar.position).add(w.sunOffset);
     w.sun.target.position.copy(w.avatar.position);
   }
+  if (active === 1)
+    fieldwork.update(dt, time, { moving, sneaking: sneaking(), yaw });
   if (w.particles && !reduced) w.particles.rotation.y = time * 0.003;
   placeCamera();
   updateSoulTarget();

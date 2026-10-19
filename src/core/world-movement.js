@@ -65,7 +65,7 @@ export function createMovementStepper() {
   const result = {};
   let lastStep = -1;
   let lastWorld = null;
-  return function step(world, settings, yaw, keys, context) {
+  return function step(world, settings, yaw, keys, context, speedScale = 1) {
     if (lastWorld === world && lastStep === context.stepId) return result;
     lastWorld = world;
     lastStep = context.stepId;
@@ -102,8 +102,9 @@ export function createMovementStepper() {
       result.moving = true;
       result.directionX = (dx * Math.cos(yaw) + dz * Math.sin(yaw)) / length;
       result.directionZ = (-dx * Math.sin(yaw) + dz * Math.cos(yaw)) / length;
-      world.position.x += result.directionX * settings.speed * dt;
-      world.position.z += result.directionZ * settings.speed * dt;
+      const speed = settings.speed * speedScale;
+      world.position.x += result.directionX * speed * dt;
+      world.position.z += result.directionZ * speed * dt;
       clampMovement(world.position, settings.limit);
     }
     const baseX = world.position.x,

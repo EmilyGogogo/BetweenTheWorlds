@@ -1,0 +1,196 @@
+// 人层可操控的人物。所有文字为原创。
+// focus 决定能察觉哪些自然线索、读到哪条观察笔记；
+// traits 是绑定到交互逻辑的数值，修改时同步检查 src/fieldwork.js：
+//   speed 步速倍率；presence 惊扰程度（越大动物越早察觉）；
+//   sneak 放轻脚步时 presence 的倍率；farSight 8 米外的视力；
+//   focusRange 专长对象的观察距离倍率；sneeze 是否会打喷嚏。
+export const characters = [
+  {
+    id: 'he',
+    name: '阿禾',
+    focusLabel: '昆虫',
+    focus: ['insect'],
+    background:
+      '在外婆的菜园里长大，小时候趴在地上看蚂蚁搬家，一看就是一下午。现在随身带着一枚铜边放大镜。',
+    personality: '耐心、安静，说话慢半拍，喜欢蹲着。',
+    habit: '停下来时会下意识低头看脚边，用指尖轻轻拨开草叶。',
+    ability: {
+      key: 'crouch',
+      name: '伏身',
+      description:
+        '按 Q 伏低身体：视线贴近地面，脚步几乎无声，更容易靠近小生物。',
+    },
+    preference: '清晨的露水、石头背面、花心。',
+    flaw: '近视。远处的东西在她眼里只是一团色块，看不清高空和天边。',
+    idleLines: [
+      '脚边有一点动静……是风，还是谁？',
+      '如果我再小一点，这片草就是森林。',
+    ],
+    look: {
+      height: 0.94,
+      skin: '#c49c78',
+      hair: '#2d2520',
+      coat: '#7f8a55',
+      pants: '#5b5242',
+      hat: 'straw',
+      accent: '#d8c58f',
+      gear: 'satchel',
+      prop: 'magnifier',
+    },
+    traits: {
+      speed: 0.9,
+      presence: 0.85,
+      sneak: 0.5,
+      farSight: 0.45,
+      focusRange: 1.6,
+    },
+  },
+  {
+    id: 'que',
+    name: '林雀',
+    focusLabel: '鸟类',
+    focus: ['bird'],
+    background:
+      '前护林员，记录过三百多种鸟的叫声。退休后仍每天天不亮就出门，脖子上挂着磨旧的双筒望远镜。',
+    personality: '敏锐、健谈，一听到鸟鸣就会忘了自己在说什么。',
+    habit: '走路时总在抬头看天，听见叫声会突然停下，侧过耳朵。',
+    ability: {
+      key: 'binoculars',
+      name: '望远镜',
+      description: '按 Q 举起望远镜：视野拉近，可以看清并记录远处的鸟和动物。',
+    },
+    preference: '树冠、天空、黎明前后的第一声鸣叫。',
+    flaw: '只顾抬头，脚下常踩到枯枝，地面上的动物更早察觉她。',
+    idleLines: ['嘘——听，那是谁在叫？', '天亮前后的半小时，鸟最多话。'],
+    look: {
+      height: 1.04,
+      skin: '#d1ad8a',
+      hair: '#9a9488',
+      coat: '#a99a72',
+      pants: '#4b5148',
+      hat: 'cap',
+      accent: '#56604b',
+      gear: 'strap',
+      prop: 'binoculars',
+    },
+    traits: {
+      speed: 1,
+      presence: 1.3,
+      sneak: 0.55,
+      farSight: 1.3,
+      focusRange: 1.8,
+    },
+  },
+  {
+    id: 'lan',
+    name: '岚',
+    focusLabel: '天气',
+    focus: ['weather'],
+    background:
+      '在高山气象站守了二十年。不看仪器也能说出风从哪里来、午后会不会下雨。拄着一根自己削的木杖。',
+    personality: '沉静、温和，习惯先感受，再开口。',
+    habit: '常停下来闭眼深呼吸，用手背去试风。',
+    ability: {
+      key: 'wind',
+      name: '听风',
+      description:
+        '始终能感到风向（右上角风标）。按 Q 读一读天色：风向、湿度与接下来的天气。站在下风处，动物不易闻到你。',
+    },
+    preference: '云的形状、风里的气味、石头的温度。',
+    flaw: '膝盖不好，走得慢，也跑不起来。',
+    idleLines: ['风转了一点，带着湿土的味道。', '云走得比早上快。'],
+    look: {
+      height: 0.98,
+      skin: '#b88f6c',
+      hair: '#d9d4c8',
+      coat: '#6f7f8a',
+      pants: '#3f4547',
+      hat: 'none',
+      accent: '#b5563f',
+      gear: 'scarf',
+      prop: 'staff',
+    },
+    traits: {
+      speed: 0.72,
+      presence: 0.9,
+      sneak: 0.45,
+      farSight: 1.1,
+      focusRange: 1.6,
+    },
+  },
+  {
+    id: 'man',
+    name: '小满',
+    focusLabel: '足迹',
+    focus: ['track'],
+    background:
+      '十四岁，跟着做向导的舅舅在草原上长大。会认蹄印、粪便和洞口，口袋里的笔记本画满了脚印。',
+    personality: '好奇、急性子，发现什么都想马上告诉别人。',
+    habit: '走路喜欢小跑，看见地上的痕迹会蹲下比一比自己的手掌。',
+    ability: {
+      key: 'trail',
+      name: '循迹',
+      description:
+        '按 Q 读地面：附近的足迹和洞口会短暂显现，并告诉你最近的动物在哪个方向。',
+    },
+    preference: '泥地、洞口、动物走出来的小路。',
+    flaw: '太心急，跑起来动静大；放轻脚步时也不如别人安静。',
+    idleLines: ['这串脚印还很新！', '要是能跟着它走到天黑就好了。'],
+    look: {
+      height: 0.86,
+      skin: '#a87b58',
+      hair: '#1f1a16',
+      coat: '#c0794a',
+      pants: '#55606a',
+      hat: 'band',
+      accent: '#e4cf8e',
+      gear: 'backpack',
+      prop: 'notebook',
+    },
+    traits: {
+      speed: 1.2,
+      presence: 1.35,
+      sneak: 0.75,
+      farSight: 1,
+      focusRange: 1.7,
+    },
+  },
+  {
+    id: 'mu',
+    name: '苏木',
+    focusLabel: '植物',
+    focus: ['plant'],
+    background:
+      '采集种子的植物学者，为一座种子库走遍各地的荒野。帆布包里总有干草药的香味。',
+    personality: '温柔、专注，对谁都轻声细语。',
+    habit: '经过花丛会伸手轻触叶片，随手把落下的种子收进小纸袋。',
+    ability: {
+      key: 'scent',
+      name: '草香',
+      description:
+        '按 Q 撒开一小把干草药：附近吃草的动物会被气味吸引，慢慢靠近。',
+    },
+    preference: '花、种子、动物吃过的草茎。',
+    flaw: '花粉过敏，时不时会打喷嚏，惊走附近的动物。',
+    idleLines: ['这片草的草籽快熟了。', '每一种花，都在等一位特定的客人。'],
+    look: {
+      height: 1,
+      skin: '#e0b994',
+      hair: '#5b3b2a',
+      coat: '#d6c6a0',
+      pants: '#6b5a48',
+      hat: 'hood',
+      accent: '#8e9b5b',
+      gear: 'pouch',
+      prop: 'sprig',
+    },
+    traits: {
+      speed: 0.95,
+      presence: 1,
+      sneak: 0.5,
+      farSight: 1,
+      focusRange: 1.6,
+      sneeze: true,
+    },
+  },
+];
