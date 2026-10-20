@@ -1,0 +1,651 @@
+
+> between-the-worlds@0.1.0 check
+> npm run format:check && npm run lint && npm test && npm run build
+
+
+> between-the-worlds@0.1.0 format:check
+> prettier . --check
+
+Checking formatting...
+All matched files use Prettier code style!
+
+> between-the-worlds@0.1.0 lint
+> eslint . --max-warnings=0
+
+
+> between-the-worlds@0.1.0 test
+> node --test tests/unit/*.test.mjs
+
+TAP version 13
+# Subtest: Moon handler extraction preserves preexisting container, Moon state and compatibility fields
+ok 1 - Moon handler extraction preserves preexisting container, Moon state and compatibility fields
+  ---
+  duration_ms: 1.507792
+  type: 'test'
+  ...
+# Subtest: Earth arbitration is deterministic, reselects live eligibility, and updates each handler once
+ok 2 - Earth arbitration is deterministic, reselects live eligibility, and updates each handler once
+  ---
+  duration_ms: 0.624083
+  type: 'test'
+  ...
+# Subtest: real shared route blocks welcome/help/transitions/repeats with Sun in range
+ok 3 - real shared route blocks welcome/help/transitions/repeats with Sun in range
+  ---
+  duration_ms: 543.873916
+  type: 'test'
+  ...
+# Subtest: actual double eligibility invites original Moon first, then responds to Sun without reinstalling state
+ok 4 - actual double eligibility invites original Moon first, then responds to Sun without reinstalling state
+  ---
+  duration_ms: 473.626541
+  type: 'test'
+  ...
+# Subtest: Sun response and cooldown never prevent an eligible independent Moon invitation
+ok 5 - Sun response and cooldown never prevent an eligible independent Moon invitation
+  ---
+  duration_ms: 776.200209
+  type: 'test'
+  ...
+# Subtest: reduced-motion Sun response and fixed-offset Moon follow compose in one moving scenario
+ok 6 - reduced-motion Sun response and fixed-offset Moon follow compose in one moving scenario
+  ---
+  duration_ms: 392.571709
+  type: 'test'
+  ...
+# Subtest: available Moon stays independent and prompt queries have no side effects
+ok 7 - available Moon stays independent and prompt queries have no side effects
+  ---
+  duration_ms: 1.777458
+  type: 'test'
+  ...
+# Subtest: invitation uses the inclusive 3D distance boundary, not just X/Z
+ok 8 - invitation uses the inclusive 3D distance boundary, not just X/Z
+  ---
+  duration_ms: 3.517542
+  type: 'test'
+  ...
+# Subtest: a displayed action does not authorize stale, blocked, or disabled input
+ok 9 - a displayed action does not authorize stale, blocked, or disabled input
+  ---
+  duration_ms: 1.239
+  type: 'test'
+  ...
+# Subtest: absent, removed, or replaced Moon produces no action and no new objects
+ok 10 - absent, removed, or replaced Moon produces no action and no new objects
+  ---
+  duration_ms: 0.936167
+  type: 'test'
+  ...
+# Subtest: invite once: keeps the original mesh, clears action and never resets phase
+ok 11 - invite once: keeps the original mesh, clears action and never resets phase
+  ---
+  duration_ms: 0.347333
+  type: 'test'
+  ...
+# Subtest: initial orbit preserves horizontal bearing in every quadrant
+ok 12 - initial orbit preserves horizontal bearing in every quadrant
+  ---
+  duration_ms: 2.59075
+  type: 'test'
+  ...
+# Subtest: zero horizontal bearing explicitly chooses +X, including signed zeros
+ok 13 - zero horizontal bearing explicitly chooses +X, including signed zeros
+  ---
+  duration_ms: 1.928458
+  type: 'test'
+  ...
+# Subtest: one hour of orbit stays finite and clear of atmosphere, with dt accumulation
+ok 14 - one hour of orbit stays finite and clear of atmosphere, with dt accumulation
+  ---
+  duration_ms: 29.900333
+  type: 'test'
+  ...
+# Subtest: orbit follows latest player center even while avatar is stale or at boundary
+ok 15 - orbit follows latest player center even while avatar is stale or at boundary
+  ---
+  duration_ms: 2.388834
+  type: 'test'
+  ...
+# Subtest: pause freezes state/position and resume advances only supplied active dt
+ok 16 - pause freezes state/position and resume advances only supplied active dt
+  ---
+  duration_ms: 0.455791
+  type: 'test'
+  ...
+# Subtest: reduced motion composes with actual repositioning on both axes and diagonally
+ok 17 - reduced motion composes with actual repositioning on both axes and diagonally
+  ---
+  duration_ms: 0.2825
+  type: 'test'
+  ...
+# Subtest: actual Earth factory preserves both talkers and resources through invite/update
+ok 18 - actual Earth factory preserves both talkers and resources through invite/update
+  ---
+  duration_ms: 915.310791
+  type: 'test'
+  ...
+# Subtest: V4-L1/L2 real invitation selects duet, invitable does not disable it and queries are pure
+ok 19 - V4-L1/L2 real invitation selects duet, invitable does not disable it and queries are pure
+  ---
+  duration_ms: 550.049375
+  type: 'test'
+  ...
+# Subtest: V4-L2 stale duet prompt falls back to solo and cannot mutate or invent Moon
+ok 20 - V4-L2 stale duet prompt falls back to solo and cannot mutate or invent Moon
+  ---
+  duration_ms: 445.011042
+  type: 'test'
+  ...
+# Subtest: V4-L3 inviting Moon during solo never upgrades the locked response
+ok 21 - V4-L3 inviting Moon during solo never upgrades the locked response
+  ---
+  duration_ms: 392.305041
+  type: 'test'
+  ...
+# Subtest: V4-L4/L5 one Sun envelope drives Moon and only natural completion sets memory
+ok 22 - V4-L4/L5 one Sun envelope drives Moon and only natural completion sets memory
+  ---
+  duration_ms: 1089.004875
+  type: 'test'
+  ...
+# Subtest: V4-L5 outer cancellation and explicit disable never count as completion; history survives
+ok 23 - V4-L5 outer cancellation and explicit disable never count as completion; history survives
+  ---
+  duration_ms: 1551.559375
+  type: 'test'
+  ...
+# Subtest: V4-L6 nondefault emissive restores exactly through 100 responses with stable resource and entity references
+ok 24 - V4-L6 nondefault emissive restores exactly through 100 responses with stable resource and entity references
+  ---
+  duration_ms: 461.7285
+  type: 'test'
+  ...
+# Subtest: V4-L7 paused faults restore the captured material and never rejoin the same response
+ok 25 - V4-L7 paused faults restore the captured material and never rejoin the same response
+  ---
+  duration_ms: 1603.302542
+  type: 'test'
+  ...
+# Subtest: V4-L7 all Sun availability faults clean Moon while paused and preserve completion semantics
+ok 26 - V4-L7 all Sun availability faults clean Moon while paused and preserve completion semantics
+  ---
+  duration_ms: 967.505167
+  type: 'test'
+  ...
+# Subtest: V4-L8 pause, omitted inactive frames and invalid dt never advance, fresh worlds are independent
+ok 27 - V4-L8 pause, omitted inactive frames and invalid dt never advance, fresh worlds are independent
+  ---
+  duration_ms: 795.791416
+  type: 'test'
+  ...
+# Subtest: V4-L9 reduced motion paints immediately, remains steady while following actual movement, then restores
+ok 28 - V4-L9 reduced motion paints immediately, remains steady while following actual movement, then restores
+  ---
+  duration_ms: 403.334209
+  type: 'test'
+  ...
+# Subtest: V4-L3/L8 R body identities reject duet, drop an active partner and never rejoin that id
+ok 29 - V4-L3/L8 R body identities reject duet, drop an active partner and never rejoin that id
+  ---
+  duration_ms: 962.78625
+  type: 'test'
+  ...
+# Subtest: V4-L8 relationship initialization merges existing state and captures original Earth before R
+ok 30 - V4-L8 relationship initialization merges existing state and captures original Earth before R
+  ---
+  duration_ms: 296.772333
+  type: 'test'
+  ...
+# Subtest: V4-L10 update order, dt=0 action sync and optional relationship retain old callers
+ok 31 - V4-L10 update order, dt=0 action sync and optional relationship retain old callers
+  ---
+  duration_ms: 0.196292
+  type: 'test'
+  ...
+# Subtest: V4-L11 actual traction displacement crosses Sun outer range without changing budgets or priority
+ok 32 - V4-L11 actual traction displacement crosses Sun outer range without changing budgets or priority
+  ---
+  duration_ms: 298.762417
+  type: 'test'
+  ...
+# Subtest: V4-L5 ending records are consumed once, including old completion retained during the next response
+ok 33 - V4-L5 ending records are consumed once, including old completion retained during the next response
+  ---
+  duration_ms: 294.065875
+  type: 'test'
+  ...
+# Subtest: V4-L1 partner eligibility uses relation identity rather than distance to Sun
+ok 34 - V4-L1 partner eligibility uses relation identity rather than distance to Sun
+  ---
+  duration_ms: 292.279542
+  type: 'test'
+  ...
+# Subtest: real scene independently reaches ringed action without Moon or Sun, with a full safe 12-unit path
+ok 35 - real scene independently reaches ringed action without Moon or Sun, with a full safe 12-unit path
+  ---
+  duration_ms: 520.389125
+  type: 'test'
+  ...
+# Subtest: 3D eligibility, inclusive range, exact zero horizontal bearing and invalid movement limits
+ok 36 - 3D eligibility, inclusive range, exact zero horizontal bearing and invalid movement limits
+  ---
+  duration_ms: 458.062625
+  type: 'test'
+  ...
+# Subtest: queries are pure and stale prompts, held input, paused interaction and repeats cannot authorize a pull
+ok 37 - queries are pure and stale prompts, held input, paused interaction and repeats cannot authorize a pull
+  ---
+  duration_ms: 4329.593666
+  type: 'test'
+  ...
+# Subtest: multiple dt schedules conserve elapsed, actual budget and cooldown including final partial frames
+ok 38 - multiple dt schedules conserve elapsed, actual budget and cooldown including final partial frames
+  ---
+  duration_ms: 1956.82975
+  type: 'test'
+  ...
+# Subtest: invalid delta never advances pull/cooldown, large delta is capped and outer range is inclusive
+ok 39 - invalid delta never advances pull/cooldown, large delta is capped and outer range is inclusive
+  ---
+  duration_ms: 1618.143083
+  type: 'test'
+  ...
+# Subtest: actual feedback alone consumes budget, is idempotent, and old or missing feedback is not invented
+ok 40 - actual feedback alone consumes budget, is idempotent, and old or missing feedback is not invented
+  ---
+  duration_ms: 894.089167
+  type: 'test'
+  ...
+# Subtest: all eight movement keys, opposing keys, short taps and blur cancel before influence while player motion survives
+ok 41 - all eight movement keys, opposing keys, short taps and blur cancel before influence while player motion survives
+  ---
+  duration_ms: 3624.346792
+  type: 'test'
+  ...
+# Subtest: boundary probe denies outward starts and actual first clamp ends traction without sliding
+ok 42 - boundary probe denies outward starts and actual first clamp ends traction without sliding
+  ---
+  duration_ms: 552.762208
+  type: 'test'
+  ...
+# Subtest: help/transition pauses freeze state and visuals, resume uses only supplied time, blur still cancels paused pull
+ok 43 - help/transition pauses freeze state and visuals, resume uses only supplied time, blur still cancels paused pull
+  ---
+  duration_ms: 554.871125
+  type: 'test'
+  ...
+# Subtest: disable and accidental detach/hidden/reference replacement clean exact talker even while paused
+ok 44 - disable and accidental detach/hidden/reference replacement clean exact talker even while paused
+  ---
+  duration_ms: 5273.640542
+  type: 'test'
+  ...
+# Subtest: real final center feeds ring once, Moon once and Sun once, with all original state and scene identity
+ok 45 - real final center feeds ring once, Moon once and Sun once, with all original state and scene identity
+  ---
+  duration_ms: 315.549334
+  type: 'test'
+  ...
+# Subtest: three-action priority is deterministic and live, without resetting active Sun or ringed states
+ok 46 - three-action priority is deterministic and live, without resetting active Sun or ringed states
+  ---
+  duration_ms: 278.394917
+  type: 'test'
+  ...
+# Subtest: reduced motion keeps deliberate traction, steady ring, fixed Moon phase and live final-center lighting
+ok 47 - reduced motion keeps deliberate traction, steady ring, fixed Moon phase and live final-center lighting
+  ---
+  duration_ms: 283.297334
+  type: 'test'
+  ...
+# Subtest: ring envelope peaks once and 100 full cycles / 10 enable cycles retain resources, content and baselines
+ok 48 - ring envelope peaks once and 100 full cycles / 10 enable cycles retain resources, content and baselines
+  ---
+  duration_ms: 596.86825
+  type: 'test'
+  ...
+# Subtest: budget-limited last request uses only remaining path and rejected shared requests stop safely
+ok 49 - budget-limited last request uses only remaining path and rejected shared requests stop safely
+  ---
+  duration_ms: 565.245166
+  type: 'test'
+  ...
+# Subtest: cooldown boundary, zero direction on resume, and repeated enable while pulling preserve contracts
+ok 50 - cooldown boundary, zero direction on resume, and repeated enable while pulling preserve contracts
+  ---
+  duration_ms: 556.430291
+  type: 'test'
+  ...
+# Subtest: Sun geometry is reachable in the real movement disk and clears Earth/Moon
+ok 51 - Sun geometry is reachable in the real movement disk and clears Earth/Moon
+  ---
+  duration_ms: 558.040375
+  type: 'test'
+  ...
+# Subtest: proximity is finite, bounded, monotone and uses both smoothstep boundaries
+ok 52 - proximity is finite, bounded, monotone and uses both smoothstep boundaries
+  ---
+  duration_ms: 0.344584
+  type: 'test'
+  ...
+# Subtest: action uses inclusive 3D range, not X/Z, and rechecks live state after a prompt
+ok 53 - action uses inclusive 3D range, not X/Z, and rechecks live state after a prompt
+  ---
+  duration_ms: 456.800542
+  type: 'test'
+  ...
+# Subtest: distance lighting has dt-independent easing, bounded intensity and no cumulative boost
+ok 54 - distance lighting has dt-independent easing, bounded intensity and no cumulative boost
+  ---
+  duration_ms: 1469.953792
+  type: 'test'
+  ...
+# Subtest: light matrices use current Sun and player centers before the avatar/camera sync
+ok 55 - light matrices use current Sun and player centers before the avatar/camera sync
+  ---
+  duration_ms: 341.474291
+  type: 'test'
+  ...
+# Subtest: one response and feedback, then exactly three seconds plus five seconds cooldown
+ok 56 - one response and feedback, then exactly three seconds plus five seconds cooldown
+  ---
+  duration_ms: 325.17025
+  type: 'test'
+  ...
+# Subtest: timer transitions retain leftover dt and cap excessive dt without catch-up
+ok 57 - timer transitions retain leftover dt and cap excessive dt without catch-up
+  ---
+  duration_ms: 328.211375
+  type: 'test'
+  ...
+# Subtest: response envelope resets original color/scale and restores the current distance target
+ok 58 - response envelope resets original color/scale and restores the current distance target
+  ---
+  duration_ms: 670.920875
+  type: 'test'
+  ...
+# Subtest: crossing only action range completes, crossing outer range cancels with a full cooldown
+ok 59 - crossing only action range completes, crossing outer range cancels with a full cooldown
+  ---
+  duration_ms: 1046.471
+  type: 'test'
+  ...
+# Subtest: invalid dt and pause freeze response/cooldown, light interpolation and envelope
+ok 60 - invalid dt and pause freeze response/cooldown, light interpolation and envelope
+  ---
+  duration_ms: 322.590875
+  type: 'test'
+  ...
+# Subtest: disabling in each state restores V1 target/lighting and preserves original talkers and state
+ok 61 - disabling in each state restores V1 target/lighting and preserves original talkers and state
+  ---
+  duration_ms: 973.16275
+  type: 'test'
+  ...
+# Subtest: unexpected Sun removal/hidden/reference mismatch cleans up even while paused, without query mutation
+ok 62 - unexpected Sun removal/hidden/reference mismatch cleans up even while paused, without query mutation
+  ---
+  duration_ms: 1079.085708
+  type: 'test'
+  ...
+# Subtest: 100 response cycles and 10 enable cycles retain the exact scene/resource sets
+ok 63 - 100 response cycles and 10 enable cycles retain the exact scene/resource sets
+  ---
+  duration_ms: 785.663375
+  type: 'test'
+  ...
+# Subtest: Sun optional variant API keeps legacy solo and exposes a reusable borrowed envelope view
+ok 64 - Sun optional variant API keeps legacy solo and exposes a reusable borrowed envelope view
+  ---
+  duration_ms: 327.443417
+  type: 'test'
+  ...
+# Subtest: Sun selector is queried without side effects, reselected at E and locked until response end
+ok 65 - Sun selector is queried without side effects, reselected at E and locked until response end
+  ---
+  duration_ms: 339.385333
+  type: 'test'
+  ...
+# Subtest: real frame statistics use timestamp differences, even median and nearest-rank P95
+ok 66 - real frame statistics use timestamp differences, even median and nearest-rank P95
+  ---
+  duration_ms: 0.7925
+  type: 'test'
+  ...
+# Subtest: performance requires all six valid matching runs and checks median and tail independently
+ok 67 - performance requires all six valid matching runs and checks median and tail independently
+  ---
+  duration_ms: 0.610125
+  type: 'test'
+  ...
+# Subtest: manual collector instruments known source in memory and fails closed for an incompatible controller
+ok 68 - manual collector instruments known source in memory and fails closed for an incompatible controller
+  ---
+  duration_ms: 80.860833
+  type: 'test'
+  ...
+# Subtest: QA endpoints are development-only, correct MIME, with source assets still restricted
+ok 69 - QA endpoints are development-only, correct MIME, with source assets still restricted
+  ---
+  duration_ms: 33.217209
+  type: 'test'
+  ...
+# Subtest: spherical procedural fields are deterministic, bounded and continuous across seam and poles
+ok 70 - spherical procedural fields are deterministic, bounded and continuous across seam and poles
+  ---
+  duration_ms: 37.938083
+  type: 'test'
+  ...
+# Subtest: one scene owns exactly the declared nine maps with correct color spaces and packed data sharing
+ok 71 - one scene owns exactly the declared nine maps with correct color spaces and packed data sharing
+  ---
+  duration_ms: 544.093458
+  type: 'test'
+  ...
+# Subtest: single sky replaces both old backgrounds, has controlled screen-space stars and pipeline-compatible shaders
+ok 72 - single sky replaces both old backgrounds, has controlled screen-space stars and pipeline-compatible shaders
+  ---
+  duration_ms: 573.8205
+  type: 'test'
+  ...
+# Subtest: P1 rocks use a single batch and clear the player/Moon envelope and both fixed bodies by full radius
+ok 73 - P1 rocks use a single batch and clear the player/Moon envelope and both fixed bodies by full radius
+  ---
+  duration_ms: 407.913667
+  type: 'test'
+  ...
+# Subtest: ring uses radial UV/color alpha without stale vertex stripes, and keeps V3 ownership
+ok 74 - ring uses radial UV/color alpha without stale vertex stripes, and keeps V3 ownership
+  ---
+  duration_ms: 377.97225
+  type: 'test'
+  ...
+# Subtest: visual update runs once after original handlers and is frozen by pause, reduced motion and invalid delta
+ok 75 - visual update runs once after original handlers and is frozen by pause, reduced motion and invalid delta
+  ---
+  duration_ms: 361.055917
+  type: 'test'
+  ...
+# Subtest: new baselines and all GPU resource references survive 100 actions and repeated cached-world updates
+ok 76 - new baselines and all GPU resource references survive 100 actions and repeated cached-world updates
+  ---
+  duration_ms: 342.501458
+  type: 'test'
+  ...
+# Subtest: main preserves camera renderer and movement, with exactly one world update and no duplicate Earth spin
+ok 77 - main preserves camera renderer and movement, with exactly one world update and no duplicate Earth spin
+  ---
+  duration_ms: 3.908209
+  type: 'test'
+  ...
+# Subtest: merged embodiment keeps four original celestial entities and a Group sky cannot become a Sun portal
+ok 78 - merged embodiment keeps four original celestial entities and a Group sky cannot become a Sun portal
+  ---
+  duration_ms: 335.028375
+  type: 'test'
+  ...
+# Subtest: inhabiting preserves bodies, profile, return route and follower ownership
+ok 79 - inhabiting preserves bodies, profile, return route and follower ownership
+  ---
+  duration_ms: 0.706167
+  type: 'test'
+  ...
+# Subtest: R only chooses a nearby visible body and keeps its ripple stable
+ok 80 - R only chooses a nearby visible body and keeps its ripple stable
+  ---
+  duration_ms: 0.287917
+  type: 'test'
+  ...
+# Subtest: pre-registered wildlife keeps its identity when player control is prepared
+ok 81 - pre-registered wildlife keeps its identity when player control is prepared
+  ---
+  duration_ms: 0.079292
+  type: 'test'
+  ...
+# Subtest: ambient talkers need an explicit profile before they can be inhabited
+ok 82 - ambient talkers need an explicit profile before they can be inhabited
+  ---
+  duration_ms: 0.08025
+  type: 'test'
+  ...
+# Subtest: weather cycles through every phase and reports each change once
+ok 83 - weather cycles through every phase and reports each change once
+  ---
+  duration_ms: 1.560084
+  type: 'test'
+  ...
+# Subtest: rain soaks the roots, sun dries them, and growth never shrinks
+ok 84 - rain soaks the roots, sun dries them, and growth never shrinks
+  ---
+  duration_ms: 2.218291
+  type: 'test'
+  ...
+# Subtest: photosynthesis follows light: strong in sun, weak under rain
+ok 85 - photosynthesis follows light: strong in sun, weak under rain
+  ---
+  duration_ms: 0.596083
+  type: 'test'
+  ...
+# Subtest: feelings match what the grass is sensing
+ok 86 - feelings match what the grass is sensing
+  ---
+  duration_ms: 0.752667
+  type: 'test'
+  ...
+# Subtest: feelings avoid recent lines and fill every placeholder
+ok 87 - feelings avoid recent lines and fill every placeholder
+  ---
+  duration_ms: 1.27325
+  type: 'test'
+  ...
+# Subtest: every line names its source and inspirations are not quotes
+ok 88 - every line names its source and inspirations are not quotes
+  ---
+  duration_ms: 0.42075
+  type: 'test'
+  ...
+# Subtest: original attachments and third-party files retain recorded bytes
+ok 89 - original attachments and third-party files retain recorded bytes
+  ---
+  duration_ms: 15.541791
+  type: 'test'
+  ...
+# Subtest: local documentation links point to real files
+ok 90 - local documentation links point to real files
+  ---
+  duration_ms: 40.952083
+  type: 'test'
+  ...
+# Subtest: static server serves modules but never repository metadata or secrets
+ok 91 - static server serves modules but never repository metadata or secrets
+  ---
+  duration_ms: 49.804208
+  type: 'test'
+  ...
+# Subtest: shared context blocks welcome/help/transitions for both action and orbit
+ok 92 - shared context blocks welcome/help/transitions for both action and orbit
+  ---
+  duration_ms: 0.423917
+  type: 'test'
+  ...
+# Subtest: E routing isolates grass, Earth, optional worlds and blocked/repeated keys
+ok 93 - E routing isolates grass, Earth, optional worlds and blocked/repeated keys
+  ---
+  duration_ms: 0.110791
+  type: 'test'
+  ...
+# Subtest: prompts respect activity and live eligibility without changing state
+ok 94 - prompts respect activity and live eligibility without changing state
+  ---
+  duration_ms: 0.068541
+  type: 'test'
+  ...
+# Subtest: prompt DOM adapter hides immediately and only writes when text/visibility changes
+ok 95 - prompt DOM adapter hides immediately and only writes when text/visibility changes
+  ---
+  duration_ms: 2.75125
+  type: 'test'
+  ...
+# Subtest: production normal movement preserves four speeds, headings, key aliases, diagonals and release
+ok 96 - production normal movement preserves four speeds, headings, key aliases, diagonals and release
+  ---
+  duration_ms: 4.968458
+  type: 'test'
+  ...
+# Subtest: V2 movement equivalence across arbitrary in-disk starts and multiple yaw values
+ok 97 - V2 movement equivalence across arbitrary in-disk starts and multiple yaw values
+  ---
+  duration_ms: 0.770292
+  type: 'test'
+  ...
+# Subtest: pure influence is clamped on all axes/quadrants and reports only actual influence displacement
+ok 98 - pure influence is clamped on all axes/quadrants and reports only actual influence displacement
+  ---
+  duration_ms: 0.317542
+  type: 'test'
+  ...
+# Subtest: movement rejects malformed duration, vectors and limits with explicit reasons
+ok 99 - movement rejects malformed duration, vectors and limits with explicit reasons
+  ---
+  duration_ms: 0.16375
+  type: 'test'
+  ...
+# Subtest: opposing keys remain input intent and short taps/blur latch through keyup until consumption
+ok 100 - opposing keys remain input intent and short taps/blur latch through keyup until consumption
+  ---
+  duration_ms: 0.114875
+  type: 'test'
+  ...
+# Subtest: step feedback is reset, duplicate steps never move twice, pause and invalid dt never query
+ok 101 - step feedback is reset, duplicate steps never move twice, pause and invalid dt never query
+  ---
+  duration_ms: 0.088209
+  type: 'test'
+  ...
+# Subtest: input latches belong to the event world across switches and are consumed only by that world
+ok 102 - input latches belong to the event world across switches and are consumed only by that world
+  ---
+  duration_ms: 0.057917
+  type: 'test'
+  ...
+# Subtest: influence queries see the clamped player base, and rejection preserves lawful player displacement
+ok 103 - influence queries see the clamped player base, and rejection preserves lawful player displacement
+  ---
+  duration_ms: 0.0605
+  type: 'test'
+  ...
+1..103
+# tests 103
+# suites 0
+# pass 103
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 22476.628291
+
+> between-the-worlds@0.1.0 build
+> node scripts/build.mjs
+
+Static site written to dist/. Third-party licenses included.

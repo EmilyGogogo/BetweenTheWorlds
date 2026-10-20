@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-10-17T10:27:02.811Z",
+  "changedAssetsExact": 7,
+  "runtimeModulesHTTP200CorrectMIMEExactBytes": 19,
+  "productionCollectorExposed": false,
+  "conceptArtPublished": false,
+  "baselineCollectorInjection": "PASS",
+  "sourceHash": "38363a8de6a040517827a817254723b9332e0be294a3141c7e95cef0360cffb4",
+  "baselineSourceHash": "90d6083c0bc5cec653d53214640c587ef2d52d9f31600b414d7bc249e5d99d9e",
+  "browserRun": false
+}

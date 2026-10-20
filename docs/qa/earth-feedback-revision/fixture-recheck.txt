@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: boundary probe denies outward starts and actual first clamp ends traction without sliding
+ok 1 - boundary probe denies outward starts and actual first clamp ends traction without sliding
+  ---
+  duration_ms: 627.384667
+  type: 'test'
+  ...
+# Subtest: ring response restores a nondefault scale and emissive baseline even after material replacement
+ok 2 - ring response restores a nondefault scale and emissive baseline even after material replacement
+  ---
+  duration_ms: 295.368875
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1013.95125

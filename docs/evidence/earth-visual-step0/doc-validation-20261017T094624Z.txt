@@ -1,0 +1,38 @@
+Earth visual plan documentation validation
+Started UTC: 2026-10-17T09:46:24.109489+00:00
+HEAD: c97b8bbf34ab7490819710ec7972582b7cf9f77e
+Node: v22.13.0
+Scope: document formatting, repository links/original-file integrity, tracked diff whitespace; not the complete npm run check.
+
+Command: node node_modules/prettier/bin/prettier.cjs docs/earth-visual-implementation-plan.md docs/earth-visual-step0-evidence.md --check
+Exit code: 0
+Checking formatting...
+All matched files use Prettier code style!
+
+Command: node --test tests/unit/repository.test.mjs
+Exit code: 0
+TAP version 13
+# Subtest: original attachments and third-party files retain recorded bytes
+ok 1 - original attachments and third-party files retain recorded bytes
+  ---
+  duration_ms: 11.910291
+  ...
+# Subtest: local documentation links point to real files
+ok 2 - local documentation links point to real files
+  ---
+  duration_ms: 18.314292
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 84.24475
+
+Command: git diff --check
+Exit code: 0
+
+Finished UTC: 2026-10-17T09:46:24.493331+00:00

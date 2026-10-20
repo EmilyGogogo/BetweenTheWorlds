@@ -1,5 +1,4 @@
 import * as THREE from '../../vendor/three.module.js';
-import { GLTFLoader } from '../../vendor/examples/jsm/loaders/GLTFLoader.js';
 import { characters } from '../content/characters.js';
 import { clues } from '../content/clues.js';
 import { habitats } from '../content/fauna.js';
@@ -50,7 +49,12 @@ const AVATAR_MODEL_URL = new URL(
 const AVATAR_HEIGHT = 1.75;
 
 // 开始下载并整理人物模型。在进入人层之前调用，避免切换时角色缺席。
-export function loadHumanAvatar() {
+export async function loadHumanAvatar() {
+  // The browser resolves the loader's bare `three` import through index.html's
+  // import map. Keeping this dynamic lets Node unit tests build other scenes
+  // without requiring a second Three.js package installation.
+  const { GLTFLoader } =
+    await import('../../vendor/examples/jsm/loaders/GLTFLoader.js');
   return new GLTFLoader()
     .loadAsync(AVATAR_MODEL_URL.href)
     .then((gltf) => prepareAvatarModel(gltf.scene));

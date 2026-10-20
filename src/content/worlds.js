@@ -36,7 +36,7 @@ export const descriptions = [
     scale: '≈ 1 万千米',
     distance: 120,
     height: 0,
-    speed: 19,
+    speed: 38,
     limit: 200,
   },
 ];

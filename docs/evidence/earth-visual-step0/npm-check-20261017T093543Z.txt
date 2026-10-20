@@ -1,0 +1,34 @@
+Earth visual S0 non-browser check evidence
+Started UTC: 2026-10-17T09:35:43.501359+00:00
+Finished UTC: 2026-10-17T09:35:45.041325+00:00
+Branch: feat/earth-scene
+HEAD before: c97b8bbf34ab7490819710ec7972582b7cf9f77e
+HEAD after: c97b8bbf34ab7490819710ec7972582b7cf9f77e
+Node: v22.13.0
+npm: 10.9.2
+PATH prefix: /Users/naughtyrex/.nvm/versions/node/v22.13.0/bin
+Command: npm run check
+Exit code: 1
+Runtime/source/test/script/package diff before: (none)
+Git status before:
+M README.md
+ M docs/earth-high-level-plan.md
+?? docs/assets/
+?? docs/earth-v4-plan.md
+?? docs/earth-visual-implementation-plan.md
+?? docs/earth-visual-improvement-proposal.md
+?? docs/earth-visual-step0-evidence.md
+
+Complete combined stdout/stderr:
+
+> between-the-worlds@0.1.0 check
+> npm run format:check && npm run lint && npm test && npm run build
+
+
+> between-the-worlds@0.1.0 format:check
+> prettier . --check
+
+Checking formatting...
+[warn] .gstack/browse.json
+[warn] .gstack/claude-available.json
+[warn] Code style issues found in 2 files. Run Prettier with --write to fix.

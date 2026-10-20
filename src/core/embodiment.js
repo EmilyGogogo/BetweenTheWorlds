@@ -91,3 +91,9 @@ export function findSoulTarget(world, project, previous = null) {
   }
   return selected;
 }
+
+// A shader sky can expose a directional Sun portal. A decorative sky Group
+// has no such material; its visible Sun remains a normal celestial entity.
+export function skySunDirection(world) {
+  return world.sky?.material?.uniforms?.sunDir?.value ?? null;
+}

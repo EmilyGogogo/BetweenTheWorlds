@@ -1,0 +1,13 @@
+Shared worktree check, not the isolated push snapshot. Exit 1 in format:check due to concurrent uncommitted V4 earth-sun.js changes; lint/tests/build NOT_RUN. V4 was not modified or staged.
+
+
+> between-the-worlds@0.1.0 check
+> npm run format:check && npm run lint && npm test && npm run build
+
+
+> between-the-worlds@0.1.0 format:check
+> prettier . --check
+
+Checking formatting...
+[warn] src/worlds/earth-sun.js
+[warn] Code style issues found in the above file. Run Prettier with --write to fix.

@@ -1,0 +1,85 @@
+{
+  "environment": "Node v22.13.0 with canvas drawing stubs, no browser/GPU",
+  "head": "c97b8bb",
+  "sourceHash": "38363a8de6a040517827a817254723b9332e0be294a3141c7e95cef0360cffb4",
+  "baselineSourceHash": "90d6083c0bc5cec653d53214640c587ef2d52d9f31600b414d7bc249e5d99d9e",
+  "cpuGenerationMs": 308.231875,
+  "objects": 20,
+  "geometries": 11,
+  "materials": 11,
+  "textures": [
+    {
+      "name": "earth-albedo",
+      "width": 1024,
+      "height": 512,
+      "colorSpace": "srgb",
+      "mipmaps": true,
+      "estimatedRGBA8WithMipBytes": 2796202.6666666665
+    },
+    {
+      "name": "earth-clouds",
+      "width": 512,
+      "height": 256,
+      "colorSpace": "srgb",
+      "mipmaps": true,
+      "estimatedRGBA8WithMipBytes": 699050.6666666666
+    },
+    {
+      "name": "earth-height-roughness",
+      "width": 512,
+      "height": 256,
+      "colorSpace": "",
+      "mipmaps": true,
+      "estimatedRGBA8WithMipBytes": 699050.6666666666
+    },
+    {
+      "name": "gas-bands",
+      "width": 512,
+      "height": 256,
+      "colorSpace": "srgb",
+      "mipmaps": true,
+      "estimatedRGBA8WithMipBytes": 699050.6666666666
+    },
+    {
+      "name": "moon-albedo",
+      "width": 512,
+      "height": 256,
+      "colorSpace": "srgb",
+      "mipmaps": true,
+      "estimatedRGBA8WithMipBytes": 699050.6666666666
+    },
+    {
+      "name": "moon-height",
+      "width": 512,
+      "height": 256,
+      "colorSpace": "",
+      "mipmaps": true,
+      "estimatedRGBA8WithMipBytes": 699050.6666666666
+    },
+    {
+      "name": "ring-bands",
+      "width": 1024,
+      "height": 64,
+      "colorSpace": "srgb",
+      "mipmaps": true,
+      "estimatedRGBA8WithMipBytes": 349525.3333333333
+    },
+    {
+      "name": "space-density",
+      "width": 1024,
+      "height": 512,
+      "colorSpace": "srgb",
+      "mipmaps": true,
+      "estimatedRGBA8WithMipBytes": 2796202.6666666665
+    },
+    {
+      "name": "sun-granules",
+      "width": 512,
+      "height": 256,
+      "colorSpace": "srgb",
+      "mipmaps": true,
+      "estimatedRGBA8WithMipBytes": 699050.6666666666
+    }
+  ],
+  "performanceStatus": "Real frames/draw calls/GPU bytes not measured"
+}

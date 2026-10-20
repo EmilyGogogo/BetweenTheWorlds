@@ -4,8 +4,23 @@ import { descriptions } from './content/worlds.js';
 import { chooseFeeling } from './core/feelings.js';
 import { heightCm } from './core/grass-environment.js';
 import { createWorldFactory } from './worlds/index.js';
+import {
+  updateActionContext,
+  performPrimaryAction,
+  primaryActionLabel,
+  renderPrimaryAction,
+} from './core/world-actions.js';
+import {
+  createMovementInput,
+  createMovementStepper,
+} from './core/world-movement.js';
+import {
+  prepareEntities,
+  inhabit,
+  findSoulTarget,
+  skySunDirection,
+} from './core/embodiment.js';
 import { createFieldwork } from './fieldwork.js';
-import { prepareEntities, inhabit, findSoulTarget } from './core/embodiment.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('world');
@@ -36,7 +51,10 @@ const camera = new THREE.PerspectiveCamera(
 );
 const clock = new THREE.Clock();
 const worlds = [];
-const keys = new Set();
+const movementInput = createMovementInput();
+const keys = movementInput.keys;
+const stepMovement = createMovementStepper();
+let lastAvatarState;
 
 const v = new THREE.Vector3(),
   target = new THREE.Vector3(),
@@ -76,6 +94,12 @@ let feeling = null,
   nextFeeling = 0,
   lastSelfFeeling = -10;
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const actionContext = {
+  dt: 0,
+  canInteract: false,
+  canSimulate: false,
+  reducedMotion: reduced,
+};
 const { builders, rand, microHeight, groundHeight, windUniform } =
   createWorldFactory(renderer);
 
@@ -249,7 +273,7 @@ function recruit() {
   updateUI();
   toast(`${w.followers.length} 位同行者，与你一起经过世界。`);
   nearGrass = null;
-  $('invite').classList.add('hidden');
+  refreshPrimaryAction();
 }
 function canPlay() {
   return (
@@ -271,9 +295,9 @@ function updateSoulTarget() {
   }
   const world = getWorld(active);
   let candidate = findSoulTarget(world, projectEntity, soulTarget);
-  if (world.sky && world.controlled.mode !== 'swim') {
+  const sunDirection = skySunDirection(world);
+  if (sunDirection && world.controlled.mode !== 'swim') {
     camera.getWorldDirection(viewDirection);
-    const sunDirection = world.sky.material.uniforms.sunDir.value;
     if (viewDirection.dot(sunDirection) > 0.982) candidate = solarPortal;
   }
   if (!candidate) {
@@ -282,7 +306,7 @@ function updateSoulTarget() {
   }
   if (candidate.solar) {
     projectedSoul
-      .copy(world.sky.material.uniforms.sunDir.value)
+      .copy(sunDirection)
       .multiplyScalar(1000)
       .add(camera.position)
       .project(camera);
@@ -344,8 +368,22 @@ function encounter() {
     if (candidates.length)
       say(candidates[Math.floor(rand(0, candidates.length))]);
   }
+}
+function refreshActionContext(dt = 0) {
+  updateActionContext(actionContext, started, switching, !canPlay(), dt);
+  movementInput.refresh(
+    actionContext,
+    getWorld(active).controlled.limit,
+    getWorld(active),
+  );
+  actionContext.stepId = frame;
+}
+function refreshPrimaryAction() {
+  refreshActionContext();
+  const w = getWorld(active);
   nearGrass = null;
   if (
+    actionContext.canInteract &&
     ['grass', 'island'].includes(w.controlled.kind) &&
     w.followers.length < 12
   ) {
@@ -359,9 +397,11 @@ function encounter() {
       }
     }
   }
-  $('invite').classList.toggle('hidden', !nearGrass);
-  $('invite-label').textContent =
-    active === 2 ? '邀请这座岛一起漂流' : '邀请这株草一起走';
+  renderPrimaryAction(
+    $('invite'),
+    $('invite-label'),
+    primaryActionLabel(active, w, actionContext, nearGrass),
+  );
   if (active === 0 && w.controlled.kind === 'grass') senseFeelings(w);
 }
 
@@ -556,10 +596,12 @@ $('help').onclick = () => {
   clearSoulTarget();
   keys.clear();
   $('help-panel').classList.remove('hidden');
+  refreshPrimaryAction();
   $('close-help').focus();
 };
 function closeHelp() {
   $('help-panel').classList.add('hidden');
+  refreshPrimaryAction();
   $('help').focus();
 }
 $('close-help').onclick = closeHelp;
@@ -594,10 +636,21 @@ addEventListener('keydown', (e) => {
     ].includes(e.code)
   )
     e.preventDefault();
-  keys.add(e.code);
+  movementInput.keydown(e.code, getWorld(active));
   if (e.code.startsWith('Digit') && +e.key >= 1 && +e.key <= 4)
     switchWorld(+e.key - 1);
-  if (e.code === 'KeyE' && !e.repeat) recruit();
+  if (e.code === 'KeyE') {
+    refreshActionContext();
+    const feedback = performPrimaryAction({
+      active,
+      world: getWorld(active),
+      context: actionContext,
+      repeat: e.repeat,
+      recruit,
+    });
+    if (feedback) toast(feedback);
+    refreshPrimaryAction();
+  }
   if (
     active === 1 &&
     getWorld(1).controlled.kind === 'human' &&
@@ -607,9 +660,9 @@ addEventListener('keydown', (e) => {
     fieldwork.handleKey(e.code, yaw);
   if (e.code === 'KeyF' && !e.repeat) listenToSelf();
 });
-addEventListener('keyup', (e) => keys.delete(e.code));
+addEventListener('keyup', (e) => movementInput.keyup(e.code));
 addEventListener('blur', () => {
-  keys.clear();
+  movementInput.blur(getWorld(active));
   drag = null;
 });
 canvas.addEventListener('pointerdown', (e) => {
@@ -659,15 +712,19 @@ function animate() {
   windUniform.value = reduced ? 0 : time;
   const w = getWorld(active),
     d = w.controlled;
-  let dx = 0,
-    dz = 0;
-  if (started && !switching && canPlay()) {
-    if (keys.has('KeyW') || keys.has('ArrowUp')) dz -= 1;
-    if (keys.has('KeyS') || keys.has('ArrowDown')) dz += 1;
-    if (keys.has('KeyA') || keys.has('ArrowLeft')) dx -= 1;
-    if (keys.has('KeyD') || keys.has('ArrowRight')) dx += 1;
-  }
-  if (started && !switching && canPlay() && d.mode) {
+  refreshActionContext(dt);
+  const previousX = w.position.x,
+    previousZ = w.position.z;
+  const movement = stepMovement(
+    w,
+    d,
+    yaw,
+    keys,
+    actionContext,
+    active === 1 && d.kind === 'human' ? fieldwork.speedScale(sneaking()) : 1,
+  );
+  const moving = movement.moving;
+  if (actionContext.canSimulate && d.mode) {
     const vertical =
       (keys.has('Space') ? 1 : 0) -
       (keys.has('ShiftLeft') || keys.has('ShiftRight') ? 1 : 0);
@@ -685,38 +742,23 @@ function animate() {
         -0.8,
       );
   }
-  const moving = dx !== 0 || dz !== 0;
-  w.moving = moving ? 1 : 0;
-  if (moving) {
-    const len = Math.hypot(dx, dz),
-      x = (dx * Math.cos(yaw) + dz * Math.sin(yaw)) / len,
-      z = (-dx * Math.sin(yaw) + dz * Math.cos(yaw)) / len;
-    const speed =
-      d.speed *
-      (active === 1 && d.kind === 'human'
-        ? fieldwork.speedScale(sneaking())
-        : 1);
-    w.position.x += x * speed * dt;
-    w.position.z += z * speed * dt;
-    const dist = Math.hypot(w.position.x, w.position.z);
-    if (dist > d.limit) {
-      w.position.x *= d.limit / dist;
-      w.position.z *= d.limit / dist;
-    }
-    if (
-      d.mode === 'swim' &&
-      w.seabedHeight(w.position.x, w.position.z) > -2.5
-    ) {
-      w.position.x -= x * d.speed * dt;
-      w.position.z -= z * d.speed * dt;
-    }
-    if (active < 2 || d.mode) {
-      const angle = Math.atan2(-x, -z);
-      let delta = angle - w.avatar.rotation.y;
-      delta = Math.atan2(Math.sin(delta), Math.cos(delta));
-      w.avatar.rotation.y += delta * 0.14;
-    }
+  if (
+    moving &&
+    d.mode === 'swim' &&
+    w.seabedHeight(w.position.x, w.position.z) > -2.5
+  ) {
+    w.position.x = previousX;
+    w.position.z = previousZ;
   }
+  if (moving && (active < 2 || d.mode)) {
+    const angle = Math.atan2(-movement.directionX, -movement.directionZ);
+    let delta = angle - w.avatar.rotation.y;
+    delta = Math.atan2(Math.sin(delta), Math.cos(delta));
+    w.avatar.rotation.y += delta * 0.14;
+  }
+  if (w.earthActions) w.update(actionContext);
+  else w.update?.(dt, time, reduced);
+  movementInput.finishStep(w);
   if (d.kind === 'grass' || d.kind === 'flower') {
     w.avatar.rotation.z = reduced
       ? 0
@@ -774,11 +816,10 @@ function animate() {
   }
   if (active === 1)
     fieldwork.update(dt, time, { moving, sneaking: sneaking(), yaw });
-  if (active === 3 && !reduced) w.globe.rotation.y += dt * 0.018;
   if (w.particles && !reduced) w.particles.rotation.y = time * 0.003;
-  if (w.update) w.update(dt, time, reduced);
   placeCamera();
   updateSoulTarget();
+  refreshPrimaryAction();
   if (frame % 12 === 0) encounter();
   if (feeling) {
     if (time > feeling.until) hideFeeling();
@@ -788,9 +829,11 @@ function animate() {
   if (time > talkUntil) $('encounter').classList.remove('visible');
   if (time > toastUntil) $('toast').classList.remove('visible');
   renderer.render(w.scene, camera);
-  // Keep loading state in sync with the rendered scene; throttled telemetry
-  // can retain the previous world's status for another 30 frames.
-  canvas.dataset.avatar = w.avatarState ?? 'built-in';
+  const avatarState = w.avatarState ?? 'built-in';
+  if (avatarState !== lastAvatarState) {
+    canvas.dataset.avatar = avatarState;
+    lastAvatarState = avatarState;
+  }
   if (frame % 30 === 0) {
     canvas.dataset.position = `${w.position.x.toFixed(2)},${w.position.z.toFixed(2)}`;
     canvas.dataset.followers = w.followers.length;
