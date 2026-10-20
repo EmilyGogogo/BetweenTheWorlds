@@ -73,6 +73,31 @@ test('production normal movement preserves four speeds, headings, key aliases, d
   }
 });
 
+test('human movement retains character, sneak and ability speed scales', () => {
+  for (const [scale, distance] of [
+    [0.9, 6.3],
+    [1.2, 8.4],
+    [0.9 * 0.45, 2.835],
+    [0.9 * 0.4, 2.52],
+    [0.3, 2.1],
+  ]) {
+    const f = fixture(descriptions[1]);
+    f.input.keydown('KeyW');
+    f.input.keydown('KeyD');
+    for (let i = 0; i < 20; i++) {
+      f.context.stepId++;
+      f.step(f.world, f.settings, 0.22, f.input.keys, f.context, scale);
+    }
+    close(f.world.position.length(), distance);
+    const before = f.world.position.clone();
+    f.context.canSimulate = false;
+    f.context.stepId++;
+    f.step(f.world, f.settings, 0.22, f.input.keys, f.context, scale);
+    assert.deepEqual(f.world.position, before);
+    close(f.settings.speed, 7);
+  }
+});
+
 test('V2 movement equivalence across arbitrary in-disk starts and multiple yaw values', () => {
   for (const settings of descriptions)
     for (let i = 0; i < 80; i++) {

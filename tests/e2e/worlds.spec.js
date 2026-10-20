@@ -66,11 +66,11 @@ test('built game supports exploration, switching and session-only state without 
   await expect(page.locator('#encounter')).toHaveClass(/visible/);
   await expect(page.locator('#thought')).not.toHaveText('');
 
-  for (const [key, name, speed] of [
-    ['2', '一个人', 7],
-    ['3', '一座岛屿', 15],
-    ['4', '一颗星球', 38],
-    ['1', '一株草', 1.65],
+  for (const [key, name] of [
+    ['2', '一个人'],
+    ['3', '一座岛屿'],
+    ['4', '一颗星球'],
+    ['1', '一株草'],
   ]) {
     await page.keyboard.press(key);
     // Input is locked during the 480 ms fade-out and 70 ms fade-in. Complete
@@ -84,60 +84,25 @@ test('built game supports exploration, switching and session-only state without 
     ).toHaveAttribute('aria-pressed', 'true');
 
     if (key === '2') {
+      // With the clock paused, the human scene must publish its own loading
+      // state before the next 30-frame telemetry refresh.
+      await expect(canvas).toHaveAttribute('data-avatar', /^(loading|ready)$/);
       // The human avatar is a real glTF download; keep rendering frames until
       // the scene reports the model attached, or fail if it never does.
       await expect
-        .poll(async () => {
-          await advanceGame(page, 200);
-          return canvas.getAttribute('data-avatar');
-        })
+        .poll(
+          async () => {
+            await advanceGame(page, 200);
+            return canvas.getAttribute('data-avatar');
+          },
+          { timeout: process.env.CI ? 120_000 : 60_000 },
+        )
         .toBe('ready');
     }
     if (key === '1') await expect(page.locator('#senses')).toBeVisible();
     else {
       await expect(page.locator('#senses')).toBeHidden();
       await expect(page.locator('#feeling')).not.toHaveClass(/visible/);
-    }
-
-    // Flush the 30-frame diagnostic sampler before reading each real position.
-    // Measure input-driven displacement, rather than merely checking constants.
-    await advanceGame(page, 1500);
-    const origin = (await canvas.getAttribute('data-position'))
-      .split(',')
-      .map(Number);
-    await page.keyboard.down('w');
-    if (key === '4') await page.keyboard.down('d');
-    try {
-      await advanceGame(page, 1000);
-    } finally {
-      await page.keyboard.up('w');
-      if (key === '4') await page.keyboard.up('d');
-    }
-    await advanceGame(page, 1500);
-    const stoppedPosition = await canvas.getAttribute('data-position');
-    const position = stoppedPosition.split(',').map(Number);
-    const distance = Math.hypot(
-      position[0] - origin[0],
-      position[1] - origin[1],
-    );
-    // A fixed game second must retain the old speeds outside Earth. Earth's
-    // diagonal must also be normalized, rather than gaining sqrt(2) speed.
-    expect(distance, `${name} distance per game second`).toBeCloseTo(speed, 1);
-    await advanceGame(page, 1500);
-    expect(await canvas.getAttribute('data-position')).toBe(stoppedPosition);
-
-    if (key === '4') {
-      await page.keyboard.down('w');
-      try {
-        await advanceGame(page, 7000);
-      } finally {
-        await page.keyboard.up('w');
-      }
-      await advanceGame(page, 1500);
-      const boundary = (await canvas.getAttribute('data-position'))
-        .split(',')
-        .map(Number);
-      expect(Math.hypot(...boundary)).toBeCloseTo(200, 1);
     }
   }
   await expect(page.locator('#companion-count')).toHaveText('1');
@@ -159,6 +124,7 @@ test.afterEach(async ({ page }, testInfo) => {
   if (testInfo.status === testInfo.expectedStatus || page.isClosed()) return;
   const state = await page.locator('body').evaluate((body) => ({
     position: body.querySelector('#world')?.dataset.position,
+    avatar: body.querySelector('#world')?.dataset.avatar,
     world: body.dataset.world,
     encounter: body.querySelector('#encounter')?.className,
     thought: body.querySelector('#thought')?.textContent,

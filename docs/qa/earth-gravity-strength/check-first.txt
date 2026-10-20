@@ -669,10 +669,10 @@ not ok 108 - movement rejects malformed duration, vectors and limits with explic
   error: |-
     Expected values to be strictly equal:
     + actual - expected
-    
+
     + 'applied'
     - 'exceeds-limits'
-    
+
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected: 'exceeds-limits'

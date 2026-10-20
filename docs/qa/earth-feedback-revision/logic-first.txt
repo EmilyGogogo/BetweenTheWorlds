@@ -147,7 +147,7 @@ not ok 24 - boundary probe denies outward starts and actual first clamp ends tra
   error: |-
     Expected values to be strictly deep-equal:
     + actual - expected
-    
+
       Vector3 {
     +   x: 129.5296840191081,
     -   x: 129.52968401910812,
@@ -155,7 +155,7 @@ not ok 24 - boundary probe denies outward starts and actual first clamp ends tra
     +   z: -152.38786355189183
     -   z: -152.38786355189185
       }
-    
+
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
@@ -210,10 +210,10 @@ not ok 29 - reduced motion keeps deliberate traction, steady ring, fixed Moon ph
   error: |-
     Expected values to be strictly equal:
     + actual - expected
-    
+
     + '月亮，与你同行。'
     - '引力，轻轻改变了你的方向。'
-    
+
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected: '引力，轻轻改变了你的方向。'

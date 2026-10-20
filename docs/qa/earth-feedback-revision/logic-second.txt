@@ -152,9 +152,9 @@ not ok 25 - boundary probe denies outward starts and actual first clamp ends tra
   failureType: 'testCodeFailure'
   error: |-
     Expected values to be strictly equal:
-    
+
     false !== true
-    
+
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected: true

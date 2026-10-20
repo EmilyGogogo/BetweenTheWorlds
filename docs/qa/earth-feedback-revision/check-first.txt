@@ -129,7 +129,7 @@ not ok 18 - actual Earth factory preserves both talkers and resources through in
   error: |-
     Expected values to be strictly deep-equal:
     + actual - expected
-    
+
       [
     +   170,
     -   -150,
@@ -137,7 +137,7 @@ not ok 18 - actual Earth factory preserves both talkers and resources through in
     +   -200
     -   -230
       ]
-    
+
   code: 'ERR_ASSERTION'
   name: 'AssertionError'
   expected:
