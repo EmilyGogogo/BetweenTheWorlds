@@ -12,7 +12,11 @@ export const sunSettings = Object.freeze({
   cooldownDuration: 5,
 });
 
-const action = Object.freeze({ label: '回应光芒' });
+const soloVariant = Object.freeze({
+  id: 'solo',
+  action: Object.freeze({ label: '回应光芒' }),
+  feedback: '光沿着你的边缘，慢慢展开。',
+});
 const timeEpsilon = 1e-9;
 
 export function sunProximity(distance) {
@@ -30,11 +34,28 @@ export function sunProximity(distance) {
 
 // GPU resources belong to the cached scene, not to an action. No listeners,
 // clocks or per-frame Color/Vector allocations are created here.
-export function createSunResponse(world, body, halo, talker) {
+// selectVariant (optional) returns an alternative {id, action, feedback} or
+// null; it must be side-effect free because prompts query it every frame.
+export function createSunResponse(
+  world,
+  body,
+  halo,
+  talker,
+  { selectVariant = null } = {},
+) {
   world.sunBody = body;
   world.sunHalo = halo;
   world.earthState ??= {};
-  const state = { status: 'ready', remaining: 0, enabled: false };
+  // responseId/variant identify the accepted response; lastEnd records how the
+  // latest one ended so a partner can tell natural completion from cancellation.
+  const state = {
+    status: 'ready',
+    remaining: 0,
+    enabled: false,
+    responseId: 0,
+    variant: null,
+    lastEnd: null,
+  };
   world.earthState.sun = state;
   const light = world.sun;
   const target = light.target;
@@ -71,21 +92,34 @@ export function createSunResponse(world, body, halo, talker) {
     target.updateWorldMatrix(true, false);
   }
 
+  // The one response envelope; partners read it instead of keeping a clock.
+  function responseWeight(reducedMotion) {
+    if (state.status !== 'responding') return 0;
+    return reducedMotion
+      ? 0.35
+      : Math.sin(
+          Math.PI * (1 - state.remaining / sunSettings.responseDuration),
+        );
+  }
+
+  function endResponse(reason) {
+    if (state.status !== 'responding') return;
+    state.lastEnd = Object.freeze({
+      id: state.responseId,
+      variant: state.variant,
+      reason,
+    });
+  }
+
   function applyResponse(reducedMotion) {
-    let weight = 0;
-    if (state.status === 'responding') {
-      weight = reducedMotion
-        ? 0.35
-        : Math.sin(
-            Math.PI * (1 - state.remaining / sunSettings.responseDuration),
-          );
-    }
+    const weight = responseWeight(reducedMotion);
     atmosphereColor.copy(baseline.atmosphereColor).lerp(warm, weight);
     halo.scale.copy(baseline.haloScale);
     if (!reducedMotion) halo.scale.multiplyScalar(1 + 0.08 * weight);
   }
 
   function resetResponse() {
+    endResponse('disabled');
     state.status = 'ready';
     state.remaining = 0;
   }
@@ -148,6 +182,7 @@ export function createSunResponse(world, body, halo, talker) {
       }
       budget = Math.max(0, budget - state.remaining);
       if (state.status === 'responding') {
+        endResponse('complete');
         state.status = 'cooldown';
         state.remaining = sunSettings.cooldownDuration;
       } else {
@@ -158,16 +193,42 @@ export function createSunResponse(world, body, halo, talker) {
     }
   }
 
+  const view = {
+    id: 0,
+    variant: null,
+    responding: false,
+    weight: 0,
+    lastEnd: null,
+  };
+
+  function variantFor(context) {
+    return selectVariant?.(context) ?? soloVariant;
+  }
+
   const controls = {
     getPrimaryAction(context) {
-      return canRespond(context) ? action : null;
+      return canRespond(context) ? variantFor(context).action : null;
     },
     onPrimaryAction(context) {
       if (!canRespond(context)) return null;
+      // Re-select now: a stale duet prompt must not invent a partner.
+      const variant = variantFor(context);
       state.status = 'responding';
       state.remaining = sunSettings.responseDuration;
+      state.responseId += 1;
+      state.variant = variant.id;
       applyResponse(context.reducedMotion);
-      return '光沿着你的边缘，慢慢展开。';
+      return variant.feedback;
+    },
+    // Read-only view of the current response for local partners; the object is
+    // reused every frame, so callers must not keep it.
+    getResponseView(reducedMotion) {
+      view.id = state.responseId;
+      view.variant = state.variant;
+      view.responding = state.status === 'responding';
+      view.weight = responseWeight(reducedMotion);
+      view.lastEnd = state.lastEnd;
+      return view;
     },
     update(context) {
       // Maintenance is allowed even while paused, so removed bodies cannot
@@ -189,6 +250,7 @@ export function createSunResponse(world, body, halo, talker) {
       const alpha = context.reducedMotion ? 1 : 1 - Math.exp(-4 * dt);
       light.intensity += (targetIntensity - light.intensity) * alpha;
       if (state.status === 'responding' && d > sunSettings.outerRange) {
+        endResponse('out-of-range');
         state.status = 'cooldown';
         state.remaining = sunSettings.cooldownDuration;
       } else {

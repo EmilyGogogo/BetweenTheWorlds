@@ -1,6 +1,10 @@
 # Earth 高层玩法与迭代计划
 
+2026-10-20 感知反馈修订：环星球与 Sun 分开，V3 改为明显蓝环与单次扩张，V4 Moon 增强为金色暖光。完整非浏览器检查 108/108 通过，当前画面待用户复测，见 [修订 QA 与操作](earth-feedback-revision-qa.md)。
+
 独立于玩法版本的 [视觉提升提案](earth-visual-improvement-proposal.md) 与概念图已保存；星空/银河、独立云层、四天体程序材质与少量合批岩体已实现，非浏览器QA为74/74。画面、控制与性能仍待用户，见[视觉QA](earth-visual-qa-results.md)。不新增相遇概率或重复天体。
+
+V4 的 [Moon + Sun 关系合奏计划](earth-v4-plan.md) 已单独保存：复用原对象和 Sun 响应计时，让先前邀请 Moon 改变后续回应。直接依赖 V1/V2，保留现有 V3/R/视觉集成；本组合已在本地实现，用户手验待确认，见 [V4 QA](earth-v4-qa-results.md) 和 [手验 M1–M7](earth-v4-manual-qa.md)。
 
 当前进度：V1 代码、非浏览器QA和用户浏览器验收均已通过，见 [QA 记录](earth-v1-qa-results.md)。以下“已有/尚未实现”表是 `d8b32d0` 的规划基线；当前 Moon 已具备邀请与轨道回调，不能据基线表判断最新源码。
 

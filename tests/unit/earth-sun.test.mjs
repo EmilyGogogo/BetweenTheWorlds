@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import * as THREE from '../../vendor/three.module.js';
-import { sunProximity, sunSettings } from '../../src/worlds/earth-sun.js';
+import {
+  createSunResponse,
+  sunProximity,
+  sunSettings,
+} from '../../src/worlds/earth-sun.js';
 import { createEarth } from '../helpers/earth-fixture.mjs';
 
 const running = {
@@ -405,4 +409,92 @@ test('100 response cycles and 10 enable cycles retain the exact scene/resource s
   assert.equal(fresh.earthState.sun.status, 'ready');
   assert.equal(fresh.earthState.sun.remaining, 0);
   assert.equal(fresh.earthState.moon.status, 'available');
+});
+
+test('Sun optional variant API keeps legacy solo and exposes a reusable borrowed envelope view', () => {
+  const world = createEarth();
+  const talker = world.talkers.find((t) => t.object === world.sunBody);
+  // Exercise the original four-argument constructor, without V4 injection.
+  const sun = createSunResponse(world, world.sunBody, world.sunHalo, talker);
+  atDistance(world, 80);
+  const view = sun.getResponseView(false);
+  assert.deepEqual(view, {
+    id: 0,
+    variant: null,
+    responding: false,
+    weight: 0,
+    lastEnd: null,
+  });
+  assert.equal(sun.getPrimaryAction(running).label, '回应光芒');
+  assert.equal(sun.onPrimaryAction(running), '光沿着你的边缘，慢慢展开。');
+  assert.equal(sun.getResponseView(false), view);
+  assert.equal(view.id, 1);
+  assert.equal(view.variant, 'solo');
+  close(view.weight, 0);
+  for (let i = 0; i < 30; i++) sun.update(running);
+  close(sun.getResponseView(false).weight, 1);
+  assert.equal(sun.getResponseView(true), view);
+  assert.equal(view.weight, 0.35);
+  for (let i = 0; i < 30; i++) sun.update(running);
+  assert.equal(sun.getResponseView(false).responding, false);
+  assert.equal(view.weight, 0);
+  const end = view.lastEnd;
+  assert.deepEqual(end, { id: 1, variant: 'solo', reason: 'complete' });
+  assert.equal(Object.isFrozen(end), true);
+  for (let i = 0; i < 100; i++) sun.update(running);
+  assert.equal(world.earthState.sun.status, 'ready');
+  assert.equal(sun.getResponseView(false).lastEnd, end);
+  sun.setEnabled(false);
+  sun.setEnabled(false);
+  assert.equal(sun.getResponseView(false).lastEnd, end);
+  sun.setEnabled(true);
+  assert.equal(sun.onPrimaryAction(running), '光沿着你的边缘，慢慢展开。');
+  assert.equal(sun.getResponseView(false).id, 2);
+  assert.equal(view.lastEnd, end);
+  sun.setEnabled(false);
+  const disabled = sun.getResponseView(false).lastEnd;
+  assert.deepEqual(disabled, { id: 2, variant: 'solo', reason: 'disabled' });
+  sun.setEnabled(false);
+  assert.equal(sun.getResponseView(false).lastEnd, disabled);
+});
+
+test('Sun selector is queried without side effects, reselected at E and locked until response end', () => {
+  const world = createEarth();
+  let eligible = true;
+  const variant = Object.freeze({
+    id: 'test-variant',
+    action: Object.freeze({ label: 'variant' }),
+    feedback: 'accepted variant',
+  });
+  const selectVariant = () => (eligible ? variant : null);
+  const sun = createSunResponse(
+    world,
+    world.sunBody,
+    world.sunHalo,
+    world.talkers.at(-1),
+    { selectVariant },
+  );
+  atDistance(world, 80);
+  const baseline = visualSnapshot(world);
+  for (let i = 0; i < 20; i++)
+    assert.equal(sun.getPrimaryAction(running), variant.action);
+  assert.deepEqual(visualSnapshot(world), baseline);
+  eligible = false;
+  assert.equal(sun.onPrimaryAction(running), '光沿着你的边缘，慢慢展开。');
+  assert.equal(world.earthState.sun.responseId, 1);
+  eligible = true;
+  assert.equal(sun.onPrimaryAction(running), null);
+  assert.equal(sun.getResponseView(false).variant, 'solo');
+  for (let i = 0; i < 160; i++) sun.update(running);
+  assert.equal(sun.onPrimaryAction(running), 'accepted variant');
+  eligible = false;
+  assert.equal(sun.getResponseView(false).variant, 'test-variant');
+  assert.equal(sun.getResponseView(false).id, 2);
+  world.sunBody.visible = false;
+  sun.update({ ...running, canSimulate: false });
+  assert.deepEqual(sun.getResponseView(false).lastEnd, {
+    id: 2,
+    variant: 'test-variant',
+    reason: 'disabled',
+  });
 });

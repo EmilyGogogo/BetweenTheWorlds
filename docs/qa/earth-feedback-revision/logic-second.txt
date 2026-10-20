@@ -1,0 +1,300 @@
+TAP version 13
+# Subtest: V4-L1/L2 real invitation selects duet, invitable does not disable it and queries are pure
+ok 1 - V4-L1/L2 real invitation selects duet, invitable does not disable it and queries are pure
+  ---
+  duration_ms: 332.491959
+  type: 'test'
+  ...
+# Subtest: V4-L2 stale duet prompt falls back to solo and cannot mutate or invent Moon
+ok 2 - V4-L2 stale duet prompt falls back to solo and cannot mutate or invent Moon
+  ---
+  duration_ms: 306.116167
+  type: 'test'
+  ...
+# Subtest: V4-L3 inviting Moon during solo never upgrades the locked response
+ok 3 - V4-L3 inviting Moon during solo never upgrades the locked response
+  ---
+  duration_ms: 300.371
+  type: 'test'
+  ...
+# Subtest: V4-L4/L5 one Sun envelope drives Moon and only natural completion sets memory
+ok 4 - V4-L4/L5 one Sun envelope drives Moon and only natural completion sets memory
+  ---
+  duration_ms: 893.751416
+  type: 'test'
+  ...
+# Subtest: V4-L5 outer cancellation and explicit disable never count as completion; history survives
+ok 5 - V4-L5 outer cancellation and explicit disable never count as completion; history survives
+  ---
+  duration_ms: 1444.591958
+  type: 'test'
+  ...
+# Subtest: V4-L6 nondefault emissive restores exactly through 100 responses with stable resource and entity references
+ok 6 - V4-L6 nondefault emissive restores exactly through 100 responses with stable resource and entity references
+  ---
+  duration_ms: 299.714708
+  type: 'test'
+  ...
+# Subtest: V4-L7 paused faults restore the captured material and never rejoin the same response
+ok 7 - V4-L7 paused faults restore the captured material and never rejoin the same response
+  ---
+  duration_ms: 1448.965542
+  type: 'test'
+  ...
+# Subtest: V4-L7 all Sun availability faults clean Moon while paused and preserve completion semantics
+ok 8 - V4-L7 all Sun availability faults clean Moon while paused and preserve completion semantics
+  ---
+  duration_ms: 920.809333
+  type: 'test'
+  ...
+# Subtest: V4-L8 pause, omitted inactive frames and invalid dt never advance, fresh worlds are independent
+ok 9 - V4-L8 pause, omitted inactive frames and invalid dt never advance, fresh worlds are independent
+  ---
+  duration_ms: 589.931833
+  type: 'test'
+  ...
+# Subtest: V4-L9 reduced motion paints immediately, remains steady while following actual movement, then restores
+ok 10 - V4-L9 reduced motion paints immediately, remains steady while following actual movement, then restores
+  ---
+  duration_ms: 347.842125
+  type: 'test'
+  ...
+# Subtest: V4-L3/L8 R body identities reject duet, drop an active partner and never rejoin that id
+ok 11 - V4-L3/L8 R body identities reject duet, drop an active partner and never rejoin that id
+  ---
+  duration_ms: 858.287209
+  type: 'test'
+  ...
+# Subtest: V4-L8 relationship initialization merges existing state and captures original Earth before R
+ok 12 - V4-L8 relationship initialization merges existing state and captures original Earth before R
+  ---
+  duration_ms: 291.570791
+  type: 'test'
+  ...
+# Subtest: V4-L10 update order, dt=0 action sync and optional relationship retain old callers
+ok 13 - V4-L10 update order, dt=0 action sync and optional relationship retain old callers
+  ---
+  duration_ms: 0.204291
+  type: 'test'
+  ...
+# Subtest: V4-L11 actual traction displacement crosses Sun outer range without changing budgets or priority
+ok 14 - V4-L11 actual traction displacement crosses Sun outer range without changing budgets or priority
+  ---
+  duration_ms: 298.319125
+  type: 'test'
+  ...
+# Subtest: V4-L5 ending records are consumed once, including old completion retained during the next response
+ok 15 - V4-L5 ending records are consumed once, including old completion retained during the next response
+  ---
+  duration_ms: 287.734834
+  type: 'test'
+  ...
+# Subtest: V4-L1 partner eligibility uses relation identity rather than distance to Sun
+ok 16 - V4-L1 partner eligibility uses relation identity rather than distance to Sun
+  ---
+  duration_ms: 285.109792
+  type: 'test'
+  ...
+# Subtest: duet now uses a clear golden tint and eightfold emissive peak while preserving textures, pause and restoration
+ok 17 - duet now uses a clear golden tint and eightfold emissive peak while preserving textures, pause and restoration
+  ---
+  duration_ms: 575.465542
+  type: 'test'
+  ...
+# Subtest: real scene independently reaches ringed action without Moon or Sun, with a full safe 12-unit path
+ok 18 - real scene independently reaches ringed action without Moon or Sun, with a full safe 12-unit path
+  ---
+  duration_ms: 335.112708
+  type: 'test'
+  ...
+# Subtest: 3D eligibility, inclusive range, exact zero horizontal bearing and invalid movement limits
+ok 19 - 3D eligibility, inclusive range, exact zero horizontal bearing and invalid movement limits
+  ---
+  duration_ms: 308.928
+  type: 'test'
+  ...
+# Subtest: queries are pure and stale prompts, held input, paused interaction and repeats cannot authorize a pull
+ok 20 - queries are pure and stale prompts, held input, paused interaction and repeats cannot authorize a pull
+  ---
+  duration_ms: 3266.463542
+  type: 'test'
+  ...
+# Subtest: multiple dt schedules conserve elapsed, actual budget and cooldown including final partial frames
+ok 21 - multiple dt schedules conserve elapsed, actual budget and cooldown including final partial frames
+  ---
+  duration_ms: 1502.644959
+  type: 'test'
+  ...
+# Subtest: invalid delta never advances pull/cooldown, large delta is capped and outer range is inclusive
+ok 22 - invalid delta never advances pull/cooldown, large delta is capped and outer range is inclusive
+  ---
+  duration_ms: 1287.858083
+  type: 'test'
+  ...
+# Subtest: actual feedback alone consumes budget, is idempotent, and old or missing feedback is not invented
+ok 23 - actual feedback alone consumes budget, is idempotent, and old or missing feedback is not invented
+  ---
+  duration_ms: 898.978583
+  type: 'test'
+  ...
+# Subtest: all eight movement keys, opposing keys, short taps and blur cancel before influence while player motion survives
+ok 24 - all eight movement keys, opposing keys, short taps and blur cancel before influence while player motion survives
+  ---
+  duration_ms: 3488.196667
+  type: 'test'
+  ...
+# Subtest: boundary probe denies outward starts and actual first clamp ends traction without sliding
+not ok 25 - boundary probe denies outward starts and actual first clamp ends traction without sliding
+  ---
+  duration_ms: 562.585291
+  type: 'test'
+  location: '/Users/naughtyrex/claude-test/1017hackathon/BetweenTheWorlds/tests/unit/earth-ringed-planet.test.mjs:312:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    false !== true
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/naughtyrex/claude-test/1017hackathon/BetweenTheWorlds/tests/unit/earth-ringed-planet.test.mjs:350:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: help/transition pauses freeze state and visuals, resume uses only supplied time, blur still cancels paused pull
+ok 26 - help/transition pauses freeze state and visuals, resume uses only supplied time, blur still cancels paused pull
+  ---
+  duration_ms: 558.303833
+  type: 'test'
+  ...
+# Subtest: disable and accidental detach/hidden/reference replacement clean exact talker even while paused
+ok 27 - disable and accidental detach/hidden/reference replacement clean exact talker even while paused
+  ---
+  duration_ms: 5162.304792
+  type: 'test'
+  ...
+# Subtest: real final center feeds ring once, Moon once and Sun once, with all original state and scene identity
+ok 28 - real final center feeds ring once, Moon once and Sun once, with all original state and scene identity
+  ---
+  duration_ms: 283.471833
+  type: 'test'
+  ...
+# Subtest: three-action priority is deterministic and live, without resetting active Sun or ringed states
+ok 29 - three-action priority is deterministic and live, without resetting active Sun or ringed states
+  ---
+  duration_ms: 279.519958
+  type: 'test'
+  ...
+# Subtest: reduced motion keeps deliberate traction, steady ring, fixed Moon phase and live final-center lighting
+ok 30 - reduced motion keeps deliberate traction, steady ring, fixed Moon phase and live final-center lighting
+  ---
+  duration_ms: 277.808708
+  type: 'test'
+  ...
+# Subtest: ring envelope peaks once and 100 full cycles / 10 enable cycles retain resources, content and baselines
+ok 31 - ring envelope peaks once and 100 full cycles / 10 enable cycles retain resources, content and baselines
+  ---
+  duration_ms: 591.45475
+  type: 'test'
+  ...
+# Subtest: budget-limited last request uses only remaining path and rejected shared requests stop safely
+ok 32 - budget-limited last request uses only remaining path and rejected shared requests stop safely
+  ---
+  duration_ms: 554.985333
+  type: 'test'
+  ...
+# Subtest: cooldown boundary, zero direction on resume, and repeated enable while pulling preserve contracts
+ok 33 - cooldown boundary, zero direction on resume, and repeated enable while pulling preserve contracts
+  ---
+  duration_ms: 577.108458
+  type: 'test'
+  ...
+# Subtest: separated default ringed planet leaves a real gap from Sun and still permits an independent safe pull
+ok 34 - separated default ringed planet leaves a real gap from Sun and still permits an independent safe pull
+  ---
+  duration_ms: 281.744625
+  type: 'test'
+  ...
+# Subtest: traction gives immediate blue light and one 14 percent ring swell, then restores all fields
+ok 35 - traction gives immediate blue light and one 14 percent ring swell, then restores all fields
+  ---
+  duration_ms: 284.025125
+  type: 'test'
+  ...
+# Subtest: reduced-motion traction stays visibly blue without changing ring scale and clears on paused cancellation or disable
+ok 36 - reduced-motion traction stays visibly blue without changing ring scale and clears on paused cancellation or disable
+  ---
+  duration_ms: 571.928417
+  type: 'test'
+  ...
+# Subtest: spherical procedural fields are deterministic, bounded and continuous across seam and poles
+ok 37 - spherical procedural fields are deterministic, bounded and continuous across seam and poles
+  ---
+  duration_ms: 22.649459
+  type: 'test'
+  ...
+# Subtest: one scene owns exactly the declared nine maps with correct color spaces and packed data sharing
+ok 38 - one scene owns exactly the declared nine maps with correct color spaces and packed data sharing
+  ---
+  duration_ms: 327.975542
+  type: 'test'
+  ...
+# Subtest: single sky replaces both old backgrounds, has controlled screen-space stars and pipeline-compatible shaders
+ok 39 - single sky replaces both old backgrounds, has controlled screen-space stars and pipeline-compatible shaders
+  ---
+  duration_ms: 414.207459
+  type: 'test'
+  ...
+# Subtest: P1 rocks use a single batch and clear the player/Moon envelope and both fixed bodies by full radius
+ok 40 - P1 rocks use a single batch and clear the player/Moon envelope and both fixed bodies by full radius
+  ---
+  duration_ms: 303.210167
+  type: 'test'
+  ...
+# Subtest: ring uses radial UV/color alpha without stale vertex stripes, and keeps V3 ownership
+ok 41 - ring uses radial UV/color alpha without stale vertex stripes, and keeps V3 ownership
+  ---
+  duration_ms: 300.094416
+  type: 'test'
+  ...
+# Subtest: visual update runs once after original handlers and is frozen by pause, reduced motion and invalid delta
+ok 42 - visual update runs once after original handlers and is frozen by pause, reduced motion and invalid delta
+  ---
+  duration_ms: 296.071125
+  type: 'test'
+  ...
+# Subtest: new baselines and all GPU resource references survive 100 actions and repeated cached-world updates
+ok 43 - new baselines and all GPU resource references survive 100 actions and repeated cached-world updates
+  ---
+  duration_ms: 366.414542
+  type: 'test'
+  ...
+# Subtest: main preserves camera renderer and movement, with exactly one world update and no duplicate Earth spin
+ok 44 - main preserves camera renderer and movement, with exactly one world update and no duplicate Earth spin
+  ---
+  duration_ms: 3.810459
+  type: 'test'
+  ...
+# Subtest: merged embodiment keeps four original celestial entities and a Group sky cannot become a Sun portal
+ok 45 - merged embodiment keeps four original celestial entities and a Group sky cannot become a Sun portal
+  ---
+  duration_ms: 452.712959
+  type: 'test'
+  ...
+1..45
+# tests 45
+# suites 0
+# pass 44
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 21154.290791

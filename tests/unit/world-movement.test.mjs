@@ -139,7 +139,7 @@ test('movement rejects malformed duration, vectors and limits with explicit reas
     [{ duration: -1 }, 'invalid-duration'],
     [{ duration: NaN }, 'non-finite'],
     [{ duration: 0.051 }, 'invalid-duration'],
-    [{ x: 0.301 }, 'exceeds-limits'],
+    [{ x: 0.901 }, 'exceeds-limits'],
     [{ x: 13 }, 'exceeds-limits'],
   ]) {
     const f = fixture();

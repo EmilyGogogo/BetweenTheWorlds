@@ -1,5 +1,7 @@
 # Earth V3：实施分步与 QA 门槛
 
+2026-10-20 当前修订：初始环星球位置为 `(170,40,-200)`，与 Sun 分开约 298.37 单位；V3 新增清楚的蓝色发光与单次最多 14% 星环扩张，减弱动态仅稳定蓝光；原移动/计时/中止规则不变。下文旧位置/纯透明度反馈是初版设计快照，现以 [反馈修订 QA](earth-feedback-revision-qa.md) 和 [最新手验](earth-v3-manual-qa.md) 为准。
+
 日期：2026-10-17。基线：V2提交 `fef2dcb`；V1/V2手验均已由用户确认。依据：[修订设计](earth-v3-plan.md)、[V2契约](decisions/0003-earth-sun-composition.md)、当前 main/earth-actions/space。状态：用户已明确授权执行全部V3步骤；代码与非浏览器QA已完成（62项测试通过），用户T1–T7待验。
 
 ## 1. 目标、默认值与 QA 分工

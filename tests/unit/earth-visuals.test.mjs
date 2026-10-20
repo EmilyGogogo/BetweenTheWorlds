@@ -210,7 +210,7 @@ test('P1 rocks use a single batch and clear the player/Moon envelope and both fi
   assert.notEqual(rocks.parent, w.sky);
   assert.equal(w.talkers.length, 3);
   assert.equal(w.recruitables.length, 0);
-  const pRadius = 103;
+  const pRadius = 103 * 1.14; // Include the new maximum V3 ring swell.
   for (let i = 0; i < rocks.count; i++) {
     rocks.getMatrixAt(i, matrix);
     matrix.decompose(position, rotation, scale);
@@ -246,7 +246,7 @@ test('ring uses radial UV/color alpha without stale vertex stripes, and keeps V3
   assert.equal(w.sunBody.children.length, 2);
   const material = ring.material,
     map = material.map;
-  w.position.set(-60, 0, -170);
+  w.position.set(100, 0, -150);
   const c = { ...running, stepId: 1, movementLimit: 200 };
   w.earthActions.ringedPlanet.onPrimaryAction(c);
   w.earthActions.ringedPlanet.setEnabled(false);

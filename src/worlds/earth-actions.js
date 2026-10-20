@@ -4,7 +4,7 @@ export function installEarthActions(
   moon,
   sun,
   ringedPlanet = null,
-  { visualUpdate = null } = {},
+  { visualUpdate = null, relationship = null } = {},
 ) {
   function select(context) {
     if (!context.canInteract) return null;
@@ -17,12 +17,21 @@ export function installEarthActions(
   world.earthActions = { moon, sun, ringedPlanet };
   world.getPrimaryAction = (context) =>
     select(context)?.getPrimaryAction(context) ?? null;
-  world.onPrimaryAction = (context) =>
-    select(context)?.onPrimaryAction(context) ?? null;
+  world.onPrimaryAction = (context) => {
+    const handler = select(context);
+    const feedback = handler?.onPrimaryAction(context) ?? null;
+    if (handler === sun && feedback !== null && relationship)
+      relationship.update(
+        { ...context, dt: 0 },
+        sun.getResponseView(context.reducedMotion),
+      );
+    return feedback;
+  };
   world.update = (context) => {
     ringedPlanet?.update(context);
     moon.update(context);
     sun.update(context);
+    relationship?.update(context, sun.getResponseView(context.reducedMotion));
     visualUpdate?.(context);
   };
   if (ringedPlanet)

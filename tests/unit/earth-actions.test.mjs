@@ -138,8 +138,11 @@ test('actual double eligibility invites original Moon first, then responds to Su
   assert.equal(world.onPrimaryAction(running), '月亮，与你同行。');
   assert.equal(moonState.status, 'orbiting');
   assert.equal(sunState.status, 'ready');
-  assert.equal(world.getPrimaryAction(running).label, '回应光芒');
-  assert.equal(world.onPrimaryAction(running), '光沿着你的边缘，慢慢展开。');
+  assert.equal(world.getPrimaryAction(running).label, '与月亮回应光芒');
+  assert.equal(
+    world.onPrimaryAction(running),
+    '这一次，光也照见了你的同行者。',
+  );
   const phase = moonState.phase;
   const remaining = sunState.remaining;
   world.update(running);
@@ -180,7 +183,10 @@ test('reduced-motion Sun response and fixed-offset Moon follow compose in one mo
   const baseColor = world.atmosphere.material.uniforms.color.value.clone();
   world.position.set(-110, 0, -100);
   world.update(reduced);
-  assert.equal(world.onPrimaryAction(reduced), '光沿着你的边缘，慢慢展开。');
+  assert.equal(
+    world.onPrimaryAction(reduced),
+    '这一次，光也照见了你的同行者。',
+  );
   const responseColor = world.atmosphere.material.uniforms.color.value.clone();
   assert.notDeepEqual(responseColor, baseColor);
   for (const position of [

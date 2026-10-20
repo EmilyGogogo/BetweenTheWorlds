@@ -248,7 +248,7 @@ test('actual Earth factory preserves both talkers and resources through invite/u
     const [planetTalker, moonTalker] = world.talkers;
     assert.equal(planetTalker.name, '有环的星球');
     assert.equal(planetTalker.range, 290);
-    assert.deepEqual(planetTalker.object.position.toArray(), [-150, 40, -230]);
+    assert.deepEqual(planetTalker.object.position.toArray(), [170, 40, -200]);
     assert.equal(moonTalker.name, '月亮');
     assert.equal(moonTalker.range, 75);
     assert.equal(world.globe.geometry.parameters.radius, 23);

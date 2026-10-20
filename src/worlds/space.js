@@ -1,5 +1,6 @@
 import * as THREE from '../../vendor/three.module.js';
 import { createMoonCompanion } from './earth-moon.js';
+import { createMoonSunRelationship } from './earth-relationships.js';
 import { createSunResponse, sunSettings } from './earth-sun.js';
 import { installEarthActions } from './earth-actions.js';
 import { createEarthBackground, createSpaceRocks } from './earth-background.js';
@@ -14,6 +15,7 @@ import {
 import { createEarthVisualUpdate } from './earth-visuals.js';
 import {
   createRingedPlanet,
+  ringedPlanetSettings,
   ringedMovementLimits,
 } from './earth-ringed-planet.js';
 
@@ -96,7 +98,7 @@ export function makeSpace(tools) {
     w.atmosphere = atmosphere(w.avatar, 24.1);
     const p = new THREE.Group();
     s.add(p);
-    p.position.set(-150, 40, -230);
+    p.position.set(...ringedPlanetSettings.position);
     p.rotation.z = 0.38;
     const gas = mesh(
       new THREE.SphereGeometry(49, 64, 40),
@@ -173,6 +175,7 @@ export function makeSpace(tools) {
       lines: [['你以为你在独行。我的潮汐，却一直跟着你。', '原创 · 万物之间']],
     });
     const moonActions = createMoonCompanion(w, moon);
+    const relationship = createMoonSunRelationship(w, moon);
     const sunBody = new THREE.Group();
     sunBody.position.set(...sunSettings.position);
     s.add(sunBody);
@@ -207,18 +210,25 @@ export function makeSpace(tools) {
         scale: '≈ 140 万千米',
       },
     ];
-    const sunActions = createSunResponse(w, sunBody, halo, {
-      object: sunBody,
-      range: sunSettings.talkRange,
-      name: '太阳',
-      lines: [
-        ['光抵达你时，也照见了我们之间。', '原创 · 万物之间'],
-        ['靠近不是占有。你可以带着温暖，继续远行。', '原创 · 万物之间'],
-      ],
-    });
+    const sunActions = createSunResponse(
+      w,
+      sunBody,
+      halo,
+      {
+        object: sunBody,
+        range: sunSettings.talkRange,
+        name: '太阳',
+        lines: [
+          ['光抵达你时，也照见了我们之间。', '原创 · 万物之间'],
+          ['靠近不是占有。你可以带着温暖，继续远行。', '原创 · 万物之间'],
+        ],
+      },
+      { selectVariant: relationship.selectVariant },
+    );
     const visualUpdate = createEarthVisualUpdate(w);
     installEarthActions(w, moonActions, sunActions, ringedActions, {
       visualUpdate,
+      relationship,
     });
     w.earthVisuals = {
       generationMs: performance.now() - generationStart,

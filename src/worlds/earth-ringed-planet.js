@@ -1,19 +1,20 @@
+import * as THREE from '../../vendor/three.module.js';
 import { simulationDelta } from '../core/world-movement.js';
 
 export const ringedPlanetSettings = Object.freeze({
-  actionRange: 130,
-  outerRange: 160,
-  speed: 6,
+  position: Object.freeze([170, 40, -200]),
+  actionRange: 180,
+  outerRange: 220,
+  speed: 18,
   duration: 2,
-  maxDistance: 12,
+  maxDistance: 36,
   cooldown: 6,
-  probeDistance: 1,
 });
 export const ringedMovementLimits = Object.freeze({
   speed: ringedPlanetSettings.speed,
   maxDistance: ringedPlanetSettings.maxDistance,
 });
-const action = Object.freeze({ label: '感受引力 · 移动即可中止' });
+const action = Object.freeze({ label: '感受引力' });
 const epsilon = 1e-9;
 
 // Reuses the existing body/ring/talker. This module requests movement; only the
@@ -30,9 +31,15 @@ export function createRingedPlanet(world, body, gas, ring, talker) {
     remaining: 0,
     enabled: true,
     stopReason: null,
+    responseRemaining: 0,
   });
   const material = ring.material;
   const baseOpacity = material.opacity;
+  const baseScale = ring.scale.clone();
+  const baseEmissive = material.emissive.clone();
+  const baseIntensity = material.emissiveIntensity;
+  const baseContribution = baseEmissive.clone().multiplyScalar(baseIntensity);
+  const responseColor = new THREE.Color('#9fdfff');
   let startStep = -1;
   let consumedStep = -1;
 
@@ -70,39 +77,27 @@ export function createRingedPlanet(world, body, gas, ring, talker) {
       body.position.distanceTo(world.position) <= range
     );
   }
-  function hasSpace(context) {
-    const length = horizontalDistance();
-    const x =
-      world.position.x +
-      ((body.position.x - world.position.x) / length) *
-        ringedPlanetSettings.probeDistance;
-    const z =
-      world.position.z +
-      ((body.position.z - world.position.z) / length) *
-        ringedPlanetSettings.probeDistance;
-    return (
-      Math.hypot(x, z) <= context.movementLimit &&
-      Math.hypot(x - world.position.x, z - world.position.z) > 0.05
-    );
-  }
   function canStart(context) {
     return (
       context.canInteract &&
       state.status === 'ready' &&
-      !context.hasMovementInput &&
-      !context.movementInterrupted &&
-      validGeometry(context, ringedPlanetSettings.actionRange) &&
-      hasSpace(context)
+      available() &&
+      body.position.distanceTo(world.position) <=
+        ringedPlanetSettings.actionRange
     );
   }
   function restoreRing() {
     material.opacity = baseOpacity;
+    material.emissive.copy(baseEmissive);
+    material.emissiveIntensity = baseIntensity;
+    ring.scale.copy(baseScale);
   }
   function stop(reason) {
     state.status = 'cooldown';
     state.remaining = ringedPlanetSettings.cooldown;
     state.stopReason = reason;
-    restoreRing();
+    // Stopping motion must not swallow the response the player just requested.
+    if (state.responseRemaining <= epsilon) restoreRing();
   }
   function cool(dt) {
     state.remaining = Math.max(0, state.remaining - dt);
@@ -112,19 +107,29 @@ export function createRingedPlanet(world, body, gas, ring, talker) {
     }
   }
   function showResponse(reducedMotion) {
-    material.opacity =
-      state.status === 'pulling'
-        ? reducedMotion
-          ? baseOpacity + 0.08
-          : baseOpacity +
-            0.15 *
-              Math.sin(
-                (Math.PI * state.elapsed) / ringedPlanetSettings.duration,
-              )
-        : baseOpacity;
+    if (state.responseRemaining <= epsilon) {
+      restoreRing();
+      return;
+    }
+    const envelope = Math.sin(
+      Math.PI * (1 - state.responseRemaining / ringedPlanetSettings.duration),
+    );
+    // The visible response always lasts two active seconds after E, even if
+    // input or the boundary stops the optional physical pull.
+    // Reduced motion keeps deliberate traction but uses steady blue light.
+    const strength = reducedMotion ? 0.7 : 0.3 + 0.7 * envelope;
+    material.opacity = baseOpacity + (reducedMotion ? 0.08 : 0.15 * envelope);
+    material.emissive
+      .copy(responseColor)
+      .multiplyScalar(1.2 * strength)
+      .add(baseContribution);
+    material.emissiveIntensity = 1;
+    ring.scale.copy(baseScale);
+    if (!reducedMotion) ring.scale.multiplyScalar(1 + 0.14 * strength);
   }
   function setEnabled(enabled) {
     if (!enabled) {
+      state.responseRemaining = 0;
       if (state.status === 'pulling') stop('disabled-or-invalid-object');
       state.enabled = false;
       body.visible = false;
@@ -134,6 +139,7 @@ export function createRingedPlanet(world, body, gas, ring, talker) {
       return;
     }
     if (available()) return;
+    state.responseRemaining = 0;
     if (state.status === 'pulling') stop('disabled-or-invalid-object');
     state.enabled = true;
     world.ringedPlanet = body;
@@ -155,11 +161,12 @@ export function createRingedPlanet(world, body, gas, ring, talker) {
       state.status = 'pulling';
       state.elapsed = state.spent = state.remaining = 0;
       state.stopReason = null;
+      state.responseRemaining = ringedPlanetSettings.duration;
       startStep = Number.isSafeInteger(context.stepId)
         ? context.stepId
         : consumedStep;
       showResponse(context.reducedMotion);
-      return '引力，轻轻改变了你的方向。';
+      return '星环亮起，与你回应。';
     },
     getMovementInfluence(context, out) {
       const dt = simulationDelta(context.dt);
@@ -192,15 +199,10 @@ export function createRingedPlanet(world, body, gas, ring, talker) {
         if (state.enabled) setEnabled(false);
         return;
       }
-      if (
+      const interrupted =
         state.status === 'pulling' &&
-        (context.hasMovementInput || context.movementInterrupted)
-      ) {
-        if (Number.isSafeInteger(context.stepId))
-          consumedStep = Math.max(consumedStep, context.stepId);
-        stop('input-interrupted');
-        return;
-      }
+        (context.hasMovementInput || context.movementInterrupted);
+      if (interrupted) stop('input-interrupted');
       const dt = simulationDelta(context.dt);
       if (!context.canSimulate || !dt) return;
       const step = context.stepId;
@@ -210,6 +212,10 @@ export function createRingedPlanet(world, body, gas, ring, talker) {
       }
       if (step <= consumedStep || step <= startStep) return;
       consumedStep = step;
+      state.responseRemaining = Math.max(0, state.responseRemaining - dt);
+      if (state.responseRemaining <= epsilon) state.responseRemaining = 0;
+      showResponse(context.reducedMotion);
+      if (interrupted) return; // This cancellation starts the full cooldown.
       if (state.status === 'cooldown') {
         cool(dt);
         return;
@@ -239,7 +245,6 @@ export function createRingedPlanet(world, body, gas, ring, talker) {
         stop('complete');
         cool(Math.max(0, dt - result.duration));
       }
-      showResponse(context.reducedMotion);
     },
     setEnabled,
   };
