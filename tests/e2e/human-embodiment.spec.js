@@ -46,7 +46,7 @@ async function selectBirdwatcher(page) {
   await page.locator('#world').focus();
 }
 
-test('character panel blocks movement, scale changes and R before the selected body moves', async ({
+test('character panel blocks movement, scale changes and R before the selected body moves @full', async ({
   page,
 }) => {
   const { canvas, errors } = await startHuman(page);
@@ -73,7 +73,7 @@ test('character panel blocks movement, scale changes and R before the selected b
   expect(errors).toEqual([]);
 });
 
-test.describe.serial('selected human body round trip', () => {
+test.describe.serial('selected human body round trip @full', () => {
   let page, canvas, errors, humanPosition;
   let yaw = 0.22;
   test.beforeAll(async ({ browser }) => {

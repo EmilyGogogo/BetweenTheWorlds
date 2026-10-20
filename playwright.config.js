@@ -21,6 +21,13 @@ export default defineConfig({
     viewport: { width: 960, height: 640 },
     // Keep the UI viewport while reducing software WebGL rasterization cost.
     deviceScaleFactor: 0.5,
+    // CI only: keep a trace for failed tests so flaky failures can be diagnosed
+    // from the uploaded artifact. Screenshots are skipped because capturing the
+    // software-rendered WebGL canvas would add to the CPU cost this suite is
+    // already limited by; DOM snapshots, actions, console and network remain.
+    trace: process.env.CI
+      ? { mode: 'retain-on-failure', screenshots: false }
+      : 'off',
     launchOptions: {
       args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
     },

@@ -17,6 +17,7 @@
     "format:check": "prettier . --check",
     "test": "node --test tests/unit/*.test.mjs",
     "test:e2e": "playwright test",
+    "test:e2e:smoke": "playwright test --grep-invert @full",
     "check": "npm run format:check && npm run lint && npm test && npm run build"
   },
   "devDependencies": {

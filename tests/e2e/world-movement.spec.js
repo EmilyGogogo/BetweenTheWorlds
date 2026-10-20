@@ -18,7 +18,7 @@ for (const [key, name, speed] of [
   ['4', '一颗星球', 38],
   ['1', '一株草', 1.65],
 ]) {
-  test(`movement in ${name} preserves speed, release and limits`, async ({
+  test(`movement in ${name} preserves speed, release and limits @full`, async ({
     page,
   }) => {
     const errors = [];

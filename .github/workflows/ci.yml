@@ -62,4 +62,22 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - run: npm run test:e2e
+      # Tiered: PRs run only the light smoke tests; the heavy ones (titles tagged
+      # @full, see docs/testing.md) run on pushes to main and manual dispatch.
+      - name: Browser smoke tests
+        if: github.event_name == 'pull_request'
+        run: npm run test:e2e:smoke
+      - name: Full browser tests
+        if: github.event_name != 'pull_request'
+        run: npm run test:e2e
+      # Failed tests keep a Playwright trace (see playwright.config.js). Without
+      # uploading it the runner discards it, and a flaky CI failure leaves no
+      # evidence beyond the job log.
+      - name: Upload Playwright traces
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-traces
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14
