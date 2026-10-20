@@ -116,12 +116,13 @@ Earth 的美术方向与概念图见 [视觉提升提案](docs/earth-visual-impr
 ```sh
 npm run check          # 格式、lint、单元与仓库检查、静态打包
 npx playwright install chromium
-npm run test:e2e       # 实际浏览器验证游戏主流程
+npm run test:e2e       # 实际浏览器验证游戏主流程（全部用例）
+npm run test:e2e:smoke # 只跑轻量冒烟，排除标题带 @full 的重用例
 npm run build         # 输出到 dist/，可交给任意静态托管服务
 npm run preview       # 本地预览 dist/
 ```
 
-CI 会在 Linux 执行完整检查与浏览器冒烟，并在 Windows 验证脚本兼容性。CI 配置随仓库提供；是否要求检查通过后才能合并，取决于 GitHub 服务端实际启用的保护设置。
+CI 会在 Linux 执行完整检查；浏览器检查分层：PR 只跑轻量冒烟，合并到 main 或手动触发时跑全部用例。同时在 Windows 验证脚本兼容性。CI 配置随仓库提供；是否要求检查通过后才能合并，取决于 GitHub 服务端实际启用的保护设置。
 
 项目自身的开源许可证尚待所有者决定，`package.json` 暂标记为 `UNLICENSED`，仓库公开不表示已经授权再分发。Three.js r170 使用其独立的 MIT 许可，详见 [第三方说明](THIRD_PARTY_NOTICES.md)。
 

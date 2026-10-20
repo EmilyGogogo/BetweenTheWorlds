@@ -164,7 +164,7 @@ test('looking toward the sun offers a ripple and R enters the actual solar body'
   expect(errors).toEqual([]);
 });
 
-test('a seagull can approach the fish ripple, become a fish and explore underwater', async ({
+test('a seagull can approach the fish ripple, become a fish and explore underwater @full', async ({
   page,
 }) => {
   const errors = [];
@@ -211,7 +211,7 @@ test('a seagull can approach the fish ripple, become a fish and explore underwat
   expect(errors).toEqual([]);
 });
 
-test('R enters the rippling body directly in all four scales, without a selector', async ({
+test('R enters the rippling body directly in all four scales, without a selector @full', async ({
   page,
 }) => {
   const errors = [];

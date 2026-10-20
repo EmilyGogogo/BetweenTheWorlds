@@ -17,6 +17,7 @@ npm ci
 npm run check
 npx playwright install chromium
 npm run test:e2e
+npm run test:e2e:smoke
 ```
 
 Linux 首次安装浏览器可使用 `npx playwright install --with-deps chromium` 补齐系统依赖。`npm run check` 依次检查格式、ESLint、单元与仓库完整性，再生成 `dist/`。浏览器测试直接使用这个发布目录，运行前需要已执行 `npm run build`。
@@ -30,6 +31,19 @@ Linux 首次安装浏览器可使用 `npx playwright install --with-deps chromiu
 PR #9 发布回归：角色加载状态 `data-avatar` 每帧同步，避免切入人层后仍保留上一尺度的 `built-in`；位置等诊断数据仍每 30 帧更新。冒烟测试先在暂停时钟下验证人层已报告 `loading` 或 `ready`，再推进帧等待真实 glTF 模型加载到 `ready`，不依赖 CI 的渲染速度。人工复查时从草层按 2 进入人层，按 V 查看第三人称角色，再切到岛层并返回人层，确认角色可见且可移动；控制台不应出现模型加载错误。
 
 冒烟测试的耗时由软件 WebGL 的栅格速度决定，不由游戏逻辑决定：本地强制 swiftshader 约需 190 秒，核心数更少的 CI 机器更慢。因此单用例预算在 CI 下为 600 秒，本地保持 240 秒，`ci.yml` 的 `timeout-minutes` 必须高于该预算加上安装与构建时间。调整预算不改变任何断言；若耗时持续接近上限，应减少场景的渲染开销或拆分用例，而不是继续抬高预算。
+
+## CI 的浏览器检查分层
+
+完整的浏览器用例共 13 个，在本机 Chrome 加软件 WebGL 下串行约 18 分钟，CI 上也要 13 分钟以上，且对 runner 速度敏感，PR 上的偶发超时会掩盖真实问题。因此 `ci.yml` 的 `Browser smoke` job 分两层：
+
+- **PR**：运行 `npm run test:e2e:smoke`，即 `--grep-invert @full`，共 4 个用例：`pages`（子路径加载）、`human-layer`、完整探索（四层切换、人层 glTF 加载、会话状态、无外部请求）和太阳涟漪（一次 R 换身）。本机约 3 分钟。
+- **push 到 main 与手动触发（`workflow_dispatch`）**：运行全部用例 `npm run test:e2e`。需要在某个 PR 分支上跑全量时，可在 Actions 页面对该分支手动触发 CI。
+
+标题中带 `@full` 的用例属于重用例，共 9 个：`world-movement` 四个尺度的位移、`human-embodiment` 三个、海鸥变鱼，以及四层 R 换身。新增浏览器用例时，除非它是必须在每个 PR 上拦住的主流程，否则请在标题加 `@full`。
+
+这降低了 PR 上的浏览器覆盖：重用例的回归会在合并到 main 之后才暴露。位移速度、R 换身等数值逻辑另有 `tests/unit/` 覆盖。本地改变游戏行为、模块接线或发布输出时，仍按 `AGENTS.md` 运行完整的 `npm run test:e2e`。job 名称保持 `Browser smoke` 不变，避免影响可能已配置的必需检查。
+
+CI 中失败的浏览器用例会保留 Playwright trace（`playwright.config.js` 的 `trace`，仅在设置了 `CI` 时启用，不含截图，以免增加软件 WebGL 的开销）。`ci.yml` 在 browser job 失败时把 `test-results/` 上传为 `playwright-traces` artifact，保留 14 天。排查时从该次运行页面下载，解压后用 `npx playwright show-trace <路径>/trace.zip` 查看操作序列、DOM 快照、控制台与网络。本地运行不生成 trace；需要时可临时加 `--trace=retain-on-failure`。
 
 当前自动化不代表所有边界已覆盖：12 株上限、对白的完整冷却时序、镜头拖动/缩放仍需人工验证。浏览器测试使用软件 WebGL，界面视口为 960 × 640 CSS 像素，像素比为 0.5，以减少 CI 的栅格计算量；它不是画质、真实声卡或性能验收，不进行截图比对。未安装 Chromium 时应明确记录未执行，不能当作通过。
 
