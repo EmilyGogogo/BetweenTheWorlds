@@ -95,7 +95,8 @@ export function makeHuman(tools, avatarModel) {
     mountains,
     terrain,
     groundHeight,
-    field,
+    grassLayer,
+    groundTexture,
     rand,
     rock,
     rockMats,
@@ -103,6 +104,7 @@ export function makeHuman(tools, avatarModel) {
     mat,
     dummy,
     particles,
+    windUniform,
   } = tools;
   const flat = (color, extra = {}) =>
     mat(color, { flatShading: true, ...extra });
@@ -705,16 +707,204 @@ export function makeHuman(tools, avatarModel) {
     }
   }
 
+  const freshGrass = new THREE.Color('#71824d'),
+    dryGrass = new THREE.Color('#baaa6e'),
+    tintColor = new THREE.Color();
+  // 大尺度的干湿分布，让草色成片变化而不是逐根随机。
+  function grassTint(x, z) {
+    const patch =
+      0.5 +
+      0.42 * Math.sin(x * 0.045) * Math.cos(z * 0.038) +
+      0.16 * Math.sin(x * 0.19 + z * 0.14);
+    return tintColor
+      .copy(freshGrass)
+      .lerp(dryGrass, Math.max(0, Math.min(1, patch)))
+      .multiplyScalar(rand(0.76, 1.14));
+  }
+
+  // 草穗（flower 为 false）与白色小花。朝向 +x 微弯，根在原点。
+  function meadowPlantGeometry(flower) {
+    const positions = [],
+      colors = [];
+    const stemColor = new THREE.Color(flower ? '#6a7844' : '#a39357');
+    const petalColor = new THREE.Color(flower ? '#f4efdb' : '#d9bc7b');
+    const centerColor = new THREE.Color('#c3a04c');
+    function triangle(a, b, c, color) {
+      positions.push(...a, ...b, ...c);
+      for (let i = 0; i < 3; i++) colors.push(color.r, color.g, color.b);
+    }
+    function ribbon(a, b, width, color) {
+      for (const axis of [0, 2]) {
+        const left = a.slice(),
+          right = a.slice();
+        left[axis] -= width;
+        right[axis] += width;
+        triangle(left, right, b, color);
+      }
+    }
+    const height = flower ? 0.57 : 0.86;
+    ribbon([0, 0, 0], [0.075, height, 0], 0.009, stemColor);
+    for (const side of [-1, 1]) {
+      triangle(
+        [0.025, 0.22, 0],
+        [side * 0.035, 0.34, 0.025],
+        [side * 0.14, 0.37, 0],
+        stemColor,
+      );
+    }
+    if (flower) {
+      for (let i = 0; i < 10; i++) {
+        const angle = (i / 10) * Math.PI * 2;
+        const cosine = Math.cos(angle),
+          sine = Math.sin(angle);
+        const root = [0.075 + cosine * 0.02, height, sine * 0.02];
+        const left = [
+          0.075 + cosine * 0.075 - sine * 0.022,
+          height + 0.013,
+          sine * 0.075 + cosine * 0.022,
+        ];
+        const right = [
+          0.075 + cosine * 0.075 + sine * 0.022,
+          height + 0.013,
+          sine * 0.075 - cosine * 0.022,
+        ];
+        const tip = [0.075 + cosine * 0.13, height - 0.018, sine * 0.13];
+        triangle(root, left, tip, petalColor);
+        triangle(root, tip, right, petalColor);
+        const nextAngle = ((i + 1) / 10) * Math.PI * 2;
+        triangle(
+          [0.075, height + 0.012, 0],
+          [0.075 + cosine * 0.03, height, sine * 0.03],
+          [
+            0.075 + Math.cos(nextAngle) * 0.03,
+            height,
+            Math.sin(nextAngle) * 0.03,
+          ],
+          centerColor,
+        );
+      }
+    } else {
+      for (let i = 0; i < 8; i++) {
+        const y = 0.47 + i * 0.047;
+        const side = i % 2 ? 1 : -1;
+        const reach = (0.2 - i * 0.017) * side;
+        ribbon([0.045, y, 0], [reach, y + 0.1, 0.025], 0.005, stemColor);
+        triangle(
+          [reach, y + 0.08, 0.025],
+          [reach - 0.018, y + 0.14, 0.01],
+          [reach + 0.012, y + 0.18, 0.025],
+          petalColor,
+        );
+        triangle(
+          [reach, y + 0.08, 0.025],
+          [reach, y + 0.15, -0.005],
+          [reach + 0.012, y + 0.18, 0.04],
+          petalColor,
+        );
+      }
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute(
+      'position',
+      new THREE.Float32BufferAttribute(positions, 3),
+    );
+    geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    geometry.computeVertexNormals();
+    return geometry;
+  }
+
+  // 草穗与小花按 36 单位的地块实例化，返回各地块供场景 update 按距离剔除。
+  // 落在水塘、屋舍等空地内的实例缩放为 0，不长进水里和屋里。
+  // 使用现有风时钟，减弱动态效果时停止摆动，不新增动画循环；
+  // 几何、材质与实例随场景缓存常驻，离开不销毁。
+  function meadowDetails(scene) {
+    const flowerGeometry = meadowPlantGeometry(true);
+    const seedGeometry = meadowPlantGeometry(false);
+    const material = new THREE.MeshLambertMaterial({
+      vertexColors: true,
+      side: THREE.DoubleSide,
+    });
+    material.onBeforeCompile = (shader) => {
+      shader.uniforms.uTime = windUniform;
+      shader.vertexShader = 'uniform float uTime;\n' + shader.vertexShader;
+      shader.vertexShader = shader.vertexShader.replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>
+vec3 root=(modelMatrix*instanceMatrix[3]).xyz;
+float bend=position.y*position.y;
+transformed.x+=sin(uTime*1.6+root.x*.7+root.z*.35)*bend*.12;
+transformed.z+=cos(uTime*1.1+root.z*.5)*bend*.05;
+transformed*=1.0-smoothstep(85.0,125.0,distance(cameraPosition.xz,root.xz));`,
+      );
+    };
+    const transform = new THREE.Object3D();
+    const tint = new THREE.Color();
+    const tiles = [];
+    for (let x = -252; x <= 252; x += 36) {
+      for (let z = -252; z <= 252; z += 36) {
+        const group = new THREE.Group();
+        group.position.set(x, 0, z);
+        const nearStart = Math.abs(x) <= 36 && Math.abs(z) <= 36;
+        for (const flower of [false, true]) {
+          const count = flower ? (nearStart ? 70 : 28) : nearStart ? 260 : 110;
+          const instances = new THREE.InstancedMesh(
+            flower ? flowerGeometry : seedGeometry,
+            material,
+            count,
+          );
+          let clusterX = 0,
+            clusterZ = 0;
+          for (let i = 0; i < count; i++) {
+            if (i % 9 === 0) {
+              clusterX = rand(-15, 15);
+              clusterZ = rand(-15, 15);
+            }
+            const localX = clusterX + rand(-2.5, 2.5);
+            const localZ = clusterZ + rand(-2.5, 2.5);
+            transform.position.set(
+              localX,
+              groundHeight(x + localX, z + localZ),
+              localZ,
+            );
+            transform.rotation.set(
+              rand(-0.12, 0.12),
+              rand(0, Math.PI * 2),
+              rand(-0.12, 0.12),
+            );
+            const blocked = CLEARINGS.some(
+              ([cx, cz, r]) => Math.hypot(x + localX - cx, z + localZ - cz) < r,
+            );
+            transform.scale.setScalar(blocked ? 0 : rand(0.65, 1.25));
+            transform.updateMatrix();
+            instances.setMatrixAt(i, transform.matrix);
+            tint.setScalar(rand(0.78, 1.15));
+            instances.setColorAt(i, tint);
+          }
+          instances.receiveShadow = true;
+          instances.computeBoundingSphere();
+          // 让 CPU 包围球包含风摆；远距收缩只会缩小这个范围。
+          instances.boundingSphere.radius += 0.4;
+          group.add(instances);
+        }
+        scene.add(group);
+        tiles.push(group);
+      }
+    }
+    return tiles;
+  }
+
   function makeHumanScene() {
     const w = newWorld(1),
       s = w.scene;
     w.clues = [];
+    // 与天空使用同一个太阳方向，逆光草叶的透光才朝向真实的太阳。
+    const sunDirection = [-0.85, 0.07, -1];
     // 清晨稀树草原：低角度暖光、粉紫色天空与谷地薄雾。
     w.sky = sky(s, {
       top: '#9a9dbb',
       bottom: '#f3c49b',
       sun: '#ffe2a8',
-      direction: [-0.85, 0.07, -1],
+      direction: sunDirection,
     });
     s.background.set('#e2c2a6');
     s.fog.color.set('#dcc0a8');
@@ -723,9 +913,68 @@ export function makeHuman(tools, avatarModel) {
     w.sunOffset = new THREE.Vector3(-72, 34, -75);
     addClouds(s);
     mountains(s);
-    terrain(s, 1200, 190, groundHeight, ['#6c7444', '#b9a86e']);
-    field(s, 72000, 120, 0.68, groundHeight);
-    field(s, 22000, 250, 0.6, groundHeight);
+    const ground = terrain(s, 1200, 190, groundHeight, ['#768353', '#b1a574'], {
+      map: groundTexture({
+        // 平铺贴图只保留低对比的细纹。大色斑若画在这里，会每隔约 11 米
+        // 重复成暗块；草地的大范围色差由下方的世界坐标 blend 控制。
+        base: '#e2e5d3',
+        strokes: [
+          'rgba(211,217,188,.18)',
+          'rgba(179,191,154,.12)',
+          'rgba(220,213,180,.14)',
+        ],
+        cuts: [0.62, 0.26],
+        count: 90000,
+        size: [2, 4],
+        repeat: 110,
+        seed: 20261017,
+      }),
+      bumpScale: 0.05,
+      blend: (x, z, y) =>
+        0.4 +
+        y * 0.02 +
+        Math.sin(x * 0.03) * Math.cos(z * 0.026) * 0.22 +
+        Math.sin((x + z) * 0.011) * 0.12,
+    });
+    ground.name = 'human-ground';
+    // 近景草毯跟着受控实体环绕，中景用成丛的草打断贴图的平整感。
+    grassLayer(s, {
+      count: 64000,
+      tile: 52,
+      height: 0.36,
+      heightVariance: [0.5, 1.65],
+      width: 0.035,
+      curve: 0.34,
+      segments: 4,
+      tint: grassTint,
+      shade: 0.46,
+      sunDirection,
+    });
+    grassLayer(s, {
+      count: 30000,
+      radius: 265,
+      clumps: 760,
+      clumpRadius: 2.1,
+      height: 0.5,
+      width: 0.03,
+      curve: 0.3,
+      segments: 4,
+      tint: grassTint,
+      shade: 0.48,
+      windStrength: 0.2,
+      sunDirection,
+    });
+    const detailTiles = meadowDetails(s);
+    // 着色器在距相机 125 单位处已把草穗和小花缩到 0；地块中心再留约半块
+    // 的余量，再远的地块只增加绘制调用，看不到。
+    const detailRange = 150;
+    w.update = () => {
+      for (const tile of detailTiles) {
+        const dx = tile.position.x - w.position.x;
+        const dz = tile.position.z - w.position.z;
+        tile.visible = dx * dx + dz * dz < detailRange * detailRange;
+      }
+    };
     const scattered = [];
     for (let i = 0; i < 175; i++) {
       const x = rand(-310, 310),

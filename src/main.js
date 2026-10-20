@@ -100,8 +100,14 @@ const actionContext = {
   canSimulate: false,
   reducedMotion: reduced,
 };
-const { builders, rand, microHeight, groundHeight, windUniform } =
-  createWorldFactory(renderer);
+const {
+  builders,
+  rand,
+  microHeight,
+  groundHeight,
+  windUniform,
+  playerUniform,
+} = createWorldFactory(renderer);
 
 function getWorld(index) {
   if (!worlds[index]) {
@@ -810,6 +816,8 @@ function animate() {
       });
     }
   }
+  // 草毯环绕镜头跟随的受控实体（人，或 R 附身的对象），不是固定的人物模型。
+  if (active === 1) playerUniform.value.copy(w.position);
   if (active === 1 && w.sun) {
     w.sun.position.copy(w.avatar.position).add(w.sunOffset);
     w.sun.target.position.copy(w.avatar.position);
