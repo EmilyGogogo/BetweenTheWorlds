@@ -23,6 +23,7 @@ test('human layer: first-person observation differs by character and survives sw
   const canvas = page.locator('#world');
   await page.keyboard.press('2');
   await expect(page.locator('#world-name')).toHaveText('一个人');
+  await expect(page.locator('#veil')).not.toHaveClass(/covered/);
   await expect(page.locator('#naturalist')).toBeVisible();
   await expect(canvas).toHaveAttribute('data-view', 'first');
   await expect(canvas).toHaveAttribute('data-character', 'he');
@@ -77,10 +78,14 @@ test('human layer: first-person observation differs by character and survives sw
   // 离开人层再回来：人物、视角与笔记都保留在本次会话里。
   await page.keyboard.press('1');
   await expect(page.locator('#world-name')).toHaveText('一株草');
+  // The title updates before the final fade-in timer unlocks input. Wait for
+  // that timer before sending another key, otherwise the return is ignored.
+  await expect(page.locator('#veil')).not.toHaveClass(/covered/);
   await expect(page.locator('#naturalist')).toBeHidden();
   await expect(page.locator('#observe-hint')).toBeHidden();
   await page.keyboard.press('2');
   await expect(page.locator('#world-name')).toHaveText('一个人');
+  await expect(page.locator('#veil')).not.toHaveClass(/covered/);
   await expect(page.locator('#character-name')).toHaveText('林雀');
   await expect(canvas).toHaveAttribute('data-view', 'third');
   await expect(page.locator('#journal-count')).toHaveText(/^1 \//);
