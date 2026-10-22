@@ -51,6 +51,14 @@ CI 中失败的浏览器用例会保留 Playwright trace（`playwright.config.js
 
 本轮新增 Node 用例覆盖 Earth 邀请距离/资格/幂等、初始方向、长时间轨道、最新中心、暂停/减弱动态、实际工厂对象与资源身份、新会话重置，以及共享路由/提示 DOM 适配；纹理绘制使用 Node stub，不启动 WebGL，不代表画质或实际事件接线通过。具体结果见 [V1 QA 记录](earth-v1-qa-results.md)。
 
+## CI 切换竞态排查（2026-10-22）
+
+`human-layer.spec.js` 在每次切换后都必须等待 `#veil` 移除 `covered`，再发送下一次游戏输入。`switchWorld` 先更新尺度标题，再等待最后 70 毫秒的淡入定时器并解除输入锁；只等待标题会让下一次按键落在锁定期间。真实浏览器暂停时钟后可稳定复现：人层按 1、推进 480 毫秒，标题已为“一株草”但遮罩仍覆盖，此时按 2 会被忽略；等遮罩退去后按 2 才能返回。这与 [10 月 19 日的失败日志](https://github.com/EmilyGogogo/BetweenTheWorlds/actions/runs/39215994977) 中“预期一个人、实际一株草”一致。修复只增加就绪状态断言，保留所有功能断言、超时与重试设置。
+
+排查历史红灯时还应核对提交 SHA、运行次数和结论：GitHub 的 Re-run 会重新执行原提交，并不使用最新 main。[旧 feature-talk 运行](https://github.com/EmilyGogogo/BetweenTheWorlds/actions/runs/39013255740) 在 10 月 20 日的第 4 次执行仍使用旧版 240 秒预算，不能据此判断 main 的修复无效；`cancelled` 也不能当作测试断言失败。当前 CI 的 `cancel-in-progress: true` 会让同组的新运行取消旧运行，日志只写操作取消时不能断言是人工取消还是并发规则造成。
+
+对应 QA-01 的人工复查：人层记入笔记并切换人物，按 1，等遮罩退去后按 2；确认回到所选人物、第三人称和会话笔记。自动化覆盖这一流程，画面、声音和人工体验仍单独验收。
+
 ## PR #11 同步 main 的本地验证（2026-10-19）
 
 环境：Windows、Node.js 22.23.3、Playwright Chromium 与软件 WebGL。本地修复分支 `codex/fix-pr11-conflicts` 从 PR 的 `7d2c302` 合入 `main` 的 `315c194`，解决六个冲突文件，保留人层田野观察、人物速度倍率、面板输入限制与 Earth 动作/视觉更新。不修改依赖、第三方原件或 CI 规则。
